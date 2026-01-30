@@ -212,6 +212,27 @@ class Planner:
                 blocks.append(BlockCall(block_id=bid))
                 known_vars |= self.R.get(bid).provides
 
+        # --- 2b) CompL-IT definition by exact word match ---
+        elif wants_complit_def and quoted:
+            word = quoted[0]
+            lemma_filter = f"FILTER(str(?itLemmaString) = {sparql_quote(word)}) ."
+
+            bid = "COMPLIT_DEF_FILTER_BY_PATTERN"
+            blocks.append(BlockCall(
+                block_id=bid,
+                slots={
+                    "pos_filter": pos_filter,
+                    "def_filter": "",
+                    "lemma_filter": lemma_filter,
+                },
+            ))
+            known_vars |= self.R.get(bid).provides
+
+            if wants_sic or wants_par or wants_sentix or wants_elita:
+                bid = "JOIN_WORD_TO_LIITA_FROM_WORD"
+                blocks.append(BlockCall(block_id=bid))
+                known_vars |= self.R.get(bid).provides
+
         # --- 3) Dialect-first lemma filter by pattern ---
         elif wants_dialect_lemma_pattern:
             if wants_sic:
@@ -300,8 +321,8 @@ class Planner:
                         f'FILTER(str(?itLemmaString) = {sparql_quote(word)}) .',
                     ],
                 )
-                if b.id not in self.R.blocks:
-                    self.R.blocks[b.id] = b
+                # Always update - the filter value changes per query
+                self.R.blocks[b.id] = b
 
                 blocks.append(BlockCall(block_id=b.id))
                 known_vars |= b.provides
@@ -406,10 +427,17 @@ class Planner:
 
             if "?itLemmaString" in known_vars:
                 select_vars.append("?itLemmaString")
-                group_by.append("?itLemmaString")
+                # Don't group by word when definitions are primary output
+                if not (wants_complit_def and "?definition" in known_vars):
+                    group_by.append("?itLemmaString")
 
             if "?definition" in known_vars:
-                aggregates["?definitionSample"] = "SAMPLE(?definition)"
+                if wants_complit_def:
+                    # Definitions are primary output - list all without grouping
+                    select_vars.append("?definition")
+                else:
+                    # Definitions are supplementary - sample one per group
+                    aggregates["?definitionSample"] = "SAMPLE(?definition)"
 
             if "?emotionLabel" in known_vars:
                 aggregates["?emotions"] = 'GROUP_CONCAT(DISTINCT ?emotionLabel; SEPARATOR=", ")'
