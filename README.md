@@ -345,20 +345,31 @@ print("SPARQL:", sparql)
 ```
 mosaic-liita/
 ├── gradio_app.py          # Web UI
+├── demo.ipynb             # Jupyter notebook demo
+├── requirements.txt       # Python dependencies
 ├── data/
-│   └── ontology_filtered.json
+│   ├── ontology_filtered.json   # Property metadata for relation resolution
+│   └── test_dataset.json        # 100-case NL→SPARQL benchmark
+├── evaluation/
+│   ├── __init__.py              # Package exports (F1Evaluator, F1Report, …)
+│   ├── f1_evaluator.py          # F1-on-answers evaluator
+│   └── mosaic_translator.py     # MoSAIC adapter + SPARQL de-aggregation
+├── scripts/
+│   └── run_f1_evaluation.py     # CLI evaluation runner
+├── reports/                     # Saved evaluation JSON reports
 ├── shared/
-│   └── llm.py             # LLM client abstraction
+│   └── llm.py                   # LLM client abstraction (multi-provider)
 └── mosaic_liita/
-    ├── __init__.py        # Public API exports
-    ├── blocks.py          # Block, BlockRegistry, make_registry()
-    ├── query.py           # QuerySpec, QueryPlan, validation
-    ├── planner.py         # Deterministic Planner
-    ├── assembler.py       # SPARQL Assembler
-    ├── agent.py           # QueryAgent, tools, agentic translation
-    ├── relations.py       # Semantic relation resolution
-    ├── constants.py       # PREFIXES, SERVICE URIs
-    └── utils.py           # Helper functions
+    ├── __init__.py              # Public API exports
+    ├── blocks.py                # Block, BlockRegistry, make_registry()
+    ├── query.py                 # QuerySpec, QueryPlan, validation
+    ├── planner.py               # Deterministic Planner
+    ├── assembler.py             # SPARQL Assembler
+    ├── agent.py                 # QueryAgent, tools, agentic translation
+    ├── relations.py             # Semantic relation resolution
+    ├── llm_refinement.py        # Optional LLM-based SPARQL refinement
+    ├── constants.py             # PREFIXES, SERVICE URIs
+    └── utils.py                 # Helper functions
 ```
 
 ## Evaluation
