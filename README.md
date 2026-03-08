@@ -361,11 +361,213 @@ mosaic-liita/
     └── utils.py           # Helper functions
 ```
 
+## Evaluation
+
+MoSAIC-LiITA includes a full evaluation pipeline that measures translation quality on a benchmark dataset of 100 natural language questions about Italian linguistics.
+
+### Test Dataset
+
+The dataset (`data/test_dataset.json`) contains **100 NL→SPARQL pairs** covering the full range of query types that LiITA and CompL-IT support:
+
+| Category | Count | Description |
+|----------|-------|-------------|
+| `complex` | 56 | Multi-feature queries (emotion + translation, semantic relation + translation, etc.) |
+| `emotion` | 9 | Queries using the ELIta emotion lexicon |
+| `semantic_combined` | 29 | Semantic relation queries combined with other features |
+| `translation` | 6 | Pure dialect translation queries |
+
+Each test case also carries one or more **pattern tags** that describe the SPARQL features required:
+
+| Pattern | Count | Meaning |
+|---------|-------|---------|
+| `EMOTION_LEXICON` | 36 | Requires ELIta emotion annotations |
+| `TRANSLATION` | 29 | Requires `vartrans:translatableAs` dialect links |
+| `MULTI_TRANSLATION` | 28 | Requires both Sicilian and Parmigiano translations |
+| `SERVICE_INTEGRATION` | 48 | Requires a federated `SERVICE` call to CompL-IT |
+| `SEMANTIC_RELATION` | 17 | Requires lexinfo hyponym/hypernym/meronym triples |
+| `POS_FILTER` | 21 | Requires `lila:hasPOS` filtering |
+| `MORPHO_REGEX` | 13 | Requires morphological pattern filtering |
+| `COUNT_ENTITIES` | 15 | Requires `COUNT`/`AVG` aggregation |
+| `SENSE_DEFINITION` | 18 | Requires `skos:definition` lookup |
+| `LEXICAL_FORM` | 7 | Requires `ontolex:writtenRep` enumeration |
+| `META_GRAPH` | 23 | Queries directly over the LiITA GRAPH |
+
+Each case specifies the **expected answer variables** (classified as primary/secondary/aggregates/numeric) and has a **gold SPARQL query** verified to execute correctly against the LiITA endpoint.
+
+### Evaluation Metric: F1 on Answer Sets
+
+The evaluation uses **F1 score on result sets** — the harmonic mean of precision and recall computed over the set of answer tuples returned by the gold and predicted SPARQL queries.
+
+Given gold result set G and predicted result set P, both executed against the live LiITA endpoint:
+
+```
+Precision = |G ∩ P| / |P|
+Recall    = |G ∩ P| / |G|
+F1        = 2 · Precision · Recall / (Precision + Recall)
+```
+
+**Why F1 on answers rather than SPARQL string similarity?**
+
+SPARQL string comparison is fragile: two queries can be syntactically different but semantically equivalent, or syntactically similar but return completely different results. F1 on answer sets measures what actually matters — whether the system returns the *right answers* — while being robust to variable naming differences, clause ordering, and equivalent reformulations. It also naturally handles partial credit: a query that finds 8 out of 9 correct meronyms scores F1 ≈ 0.89 rather than 0.
+
+Before comparison, answer tuples are aligned via a **variable mapping** step that matches gold variable names (e.g., `italianWord`, `hypernymWord`) to predicted variable names (e.g., `wr`, `wordRel`) using category-based matching, exact name matching, and substring similarity — accounting for MoSAIC's structural naming conventions.
+
+Numeric aggregate variables (`?count`, `?avgForms`) are compared as floating-point values with a small tolerance, scoring 1.0 for an exact match and 0.0 otherwise.
+
+The report also tracks **macro-F1** (average of per-category F1 scores, giving equal weight to each category regardless of size) alongside the micro-average F1.
+
+### Running the Evaluation
+
+#### Deterministic mode (no LLM required)
+
+```bash
+python scripts/run_f1_evaluation.py --mode deterministic
+```
+
+#### Agentic mode
+
+```bash
+# Mistral AI (cloud)
+python scripts/run_f1_evaluation.py \
+    --mode agentic \
+    --provider mistral \
+    --model mistral-large-latest \
+    --api-key YOUR_KEY
+
+# Anthropic
+python scripts/run_f1_evaluation.py \
+    --mode agentic \
+    --provider anthropic \
+    --model claude-haiku-4-5-20251001 \
+    --api-key YOUR_KEY
+
+# Ollama (local, no key needed)
+python scripts/run_f1_evaluation.py \
+    --mode agentic \
+    --provider ollama \
+    --model mistral-large-3:675b-cloud
+```
+
+#### All parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--mode` | `deterministic` | `deterministic` (rule-based planner) or `agentic` (LLM) |
+| `--provider` | — | LLM provider: `mistral`, `anthropic`, `openai`, `gemini`, `ollama`. Required for agentic mode. |
+| `--model` | provider default | Model identifier (e.g. `mistral-large-latest`, `claude-haiku-4-5-20251001`) |
+| `--api-key` | env variable | API key; falls back to the provider's standard env variable if omitted |
+| `--language` | `en` | NL question language to use: `en` or `it` |
+| `-o` / `--output` | auto | Output JSON path. Defaults to `reports/f1_report_mosaic_<mode>[_<provider>_<model>].json` |
+| `--timeout` | `60` | SPARQL endpoint timeout in seconds per query |
+| `--delay` | `0` | Minimum seconds between LLM calls (hard RPS cap) |
+| `--tpm-limit` | `0` | Token-per-minute budget cap. The evaluator maintains a 60-second sliding window and sleeps automatically when the budget is exhausted. Set this to your API tier's TPM limit. |
+| `--tokens-per-call` | auto | Override the per-call token estimate used for TPM accounting (default: system prompt size + 40 tokens) |
+| `--no-prefetch` | — | Disable pre-fetching of all gold query results before translation starts |
+| `--no-strip-limit` | — | Disable stripping of `LIMIT`/`OFFSET` clauses before result-set comparison |
+| `--no-deaggregate` | — | Disable de-aggregation post-processing (ablation study) |
+| `--baseline` | — | Use gold SPARQL as prediction — F1 should be ≈1.0. Tests the evaluator infrastructure. |
+| `--rerun-errors` | — | Re-evaluate only test cases that have a `predicted_error` in the existing report, then merge results back |
+| `--error-filter SUBSTR` | — | Combined with `--rerun-errors`: only re-run cases whose error message contains `SUBSTR` |
+| `--test-ids ID[,ID...]` | — | Evaluate only the specified test IDs (comma-separated). If the output file already exists, results are merged back in — useful to recover previously skipped cases. |
+
+#### Rate-limiting example (Mistral free tier: 500 000 TPM)
+
+```bash
+python scripts/run_f1_evaluation.py \
+    --mode agentic \
+    --provider mistral \
+    --model mistral-large-latest \
+    --tpm-limit 500000 \
+    --delay 1.2
+```
+
+The `--tpm-limit` and `--delay` constraints are independent and both enforced simultaneously. Using both provides a safety margin against burst usage.
+
+#### Patching skipped cases
+
+If a gold query times out during a run, the case is skipped. To recover it without re-running everything:
+
+```bash
+python scripts/run_f1_evaluation.py \
+    --mode agentic --provider ollama --model mistral-large-3:675b-cloud \
+    --test-ids 2149,2150 --timeout 120 \
+    -o reports/f1_report_mosaic_agentic_ollama_mistral-large-3-675b-cloud.json
+```
+
+### Example Report
+
+Reports are saved as JSON files in the `reports/` directory. The structure is:
+
+```json
+{
+  "summary": {
+    "total_evaluated": 99,
+    "total_skipped": 1,
+    "avg_precision": 0.616,
+    "avg_recall": 0.654,
+    "avg_f1": 0.622,
+    "macro_f1": 0.613
+  },
+  "by_category": {
+    "complex":           { "avg_f1": 0.690, "count": 56 },
+    "emotion":           { "avg_f1": 0.422, "count": 9  },
+    "semantic_combined": { "avg_f1": 0.505, "count": 28 },
+    "translation":       { "avg_f1": 0.833, "count": 6  }
+  },
+  "by_pattern": {
+    "LEXICAL_FORM":      { "avg_f1": 1.000, "count": 7  },
+    "MORPHO_REGEX":      { "avg_f1": 0.747, "count": 13 },
+    "META_GRAPH":        { "avg_f1": 0.739, "count": 23 },
+    "SENSE_DEFINITION":  { "avg_f1": 0.762, "count": 18 },
+    "TRANSLATION":       { "avg_f1": 0.671, "count": 29 },
+    "SEMANTIC_RELATION": { "avg_f1": 0.566, "count": 17 },
+    "POS_FILTER":        { "avg_f1": 0.478, "count": 21 },
+    "COUNT_ENTITIES":    { "avg_f1": 0.392, "count": 15 }
+  },
+  "results": [
+    {
+      "test_id": 2000,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "gold_count": 391,
+      "predicted_count": 391,
+      "true_positives": 391,
+      "aggregate_score": null,
+      "aggregate_details": {},
+      "variable_mapping": {
+        "italianWord": "wr",
+        "parmigianoWord": "parWR"
+      },
+      "predicted_sparql": "PREFIX ... SELECT ?wr ?parWR WHERE { ... }",
+      "gold_error": null,
+      "predicted_error": null
+    },
+    {
+      "test_id": 2054,
+      "f1": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "gold_count": 1,
+      "predicted_count": 1,
+      "true_positives": 1,
+      "aggregate_score": 1.0,
+      "aggregate_details": {
+        "count": { "gold": "78442.0", "predicted": "78442.0", "match": true }
+      },
+      "variable_mapping": { "count": "count" },
+      "predicted_sparql": "SELECT (COUNT(DISTINCT ?lemma) AS ?count) WHERE { ... }",
+      "gold_error": null,
+      "predicted_error": null
+    }
+  ]
+}
+```
+
+Each result entry records the gold and predicted result-set sizes, true positives, the inferred variable mapping, and the generated SPARQL for inspection. Cases where the gold query itself fails (e.g., endpoint timeout) are counted in `total_skipped` and omitted from the `results` array. Cases where MoSAIC fails to generate a plan are included with `f1: 0.0` and a non-null `predicted_error`.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
 
-- [LiITA Project](https://liita.it) - Interlinking linguistic resources for Italian via Linked Data
-- [CompL-IT](https://klab.ilc.cnr.it/graphdb-compl-it/) - Computational Lexicon for Italian

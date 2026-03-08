@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 # Relation keyword sets
 REL_SYNONYM = {"synonym", "synonyms", "sinonimo", "sinonimi", "equivalent", "equivalenti", "same meaning", "simile"}
 REL_ANTONYM = {"antonym", "antonyms", "antonimo", "antonimi", "opposite", "opposti", "contrary", "contrario"}
-REL_HYPONYM = {"hyponym", "hyponyms", "iponimo", "iponimi", "narrower", "more specific", "termine specifico"}
+REL_HYPONYM = {"hyponym", "hyponyms", "iponimo", "iponimi", "narrower", "more specific", "termine specifico", "subtype", "subtypes"}
 REL_HYPERNYM = {"hypernym", "hypernyms", "iperonimo", "iperonimi", "broader", "more general", "termine generico"}
 REL_MERONYM = {"meronym", "meronyms", "meronimo", "meronimi", "part of", "parte di", "component", "componente"}
 REL_HOLONYM = {"holonym", "holonyms", "olonimo", "olonimi", "whole", "insieme", "comprende", "contains"}

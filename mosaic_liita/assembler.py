@@ -44,6 +44,12 @@ class Assembler:
             needed_prefixes |= bi.prefixes
             where_lines.extend(bi.render_where())
 
+        # Detect prefixes used in aggregate expressions (e.g., xsd:float)
+        for expr in plan.aggregates.values():
+            for pfx in PREFIXES:
+                if f"{pfx}:" in expr:
+                    needed_prefixes.add(pfx)
+
         # Build PREFIX declarations
         prefix_lines = []
         for pfx in sorted(needed_prefixes):

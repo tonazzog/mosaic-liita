@@ -29,9 +29,11 @@ class QuerySpecError(ValueError):
 _VAR_RE = re.compile(r"^\?[A-Za-z_][A-Za-z0-9_]*$")
 
 # Conservative aggregate allowlist
+# Supports: COUNT(?var), AVG(DISTINCT ?var), AVG(xsd:float(?var)), GROUP_CONCAT(...)
 _ALLOWED_AGG_RE = re.compile(
     r"""^
-    (COUNT|SAMPLE|MIN|MAX|AVG|SUM)\(\s*(DISTINCT\s+)?\?[A-Za-z_][A-Za-z0-9_]*\s*\)
+    (COUNT|SAMPLE|MIN|MAX|AVG|SUM)\(\s*(DISTINCT\s+)?
+        (?:xsd:(?:float|integer|double)\()?\?[A-Za-z_][A-Za-z0-9_]*(?:\))?\s*\)
     |
     GROUP_CONCAT\(\s*(DISTINCT\s+)?\?[A-Za-z_][A-Za-z0-9_]*\s*;\s*SEPARATOR\s*=\s*"[^"]*"\s*\)
     $

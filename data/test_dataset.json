@@ -1,0 +1,3643 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "language": "en",
+    "source": "merged",
+    "generated_at": "2026-02-21T18:36:52.013546+00:00",
+    "total_examples": 100,
+    "dedup_sparql_exact": true,
+    "dedup_nl_jaccard_threshold": 0.85,
+    "by_category": {
+      "complex": 56,
+      "emotion": 9,
+      "semantic_combined": 29,
+      "translation": 6
+    },
+    "by_pattern": {
+      "EMOTION_LEXICON": 36,
+      "TRANSLATION": 29,
+      "MULTI_TRANSLATION": 28,
+      "COUNT_ENTITIES": 15,
+      "SEMANTIC_RELATION": 17,
+      "SERVICE_INTEGRATION": 48,
+      "POS_FILTER": 21,
+      "SENSE_DEFINITION": 18,
+      "META_GRAPH": 23,
+      "MORPHO_REGEX": 13,
+      "LEXICAL_FORM": 7,
+      "SENSE_COUNT": 14
+    },
+    "reduced_at": "2026-02-24T10:57:23.241312+00:00",
+    "reduced_from": 152
+  },
+  "test_cases": [
+    {
+      "id": 2000,
+      "category": "complex",
+      "nl_en": "Which Parmigiano words correspond to Italian words associated with 'tristezza' (sadness)?",
+      "nl_variants": {
+        "generated": "Which Parmigiano words correspond to Italian words associated with 'tristezza' (sadness)?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\n\nSELECT ?italianWord ?parmigianoWord\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    ?emotionEntry elita:HasEmotion elita:Tristezza .\n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    ?italianLexEntry vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> .\n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "GRAPH <http://w3id.org/elita>",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2001,
+      "category": "complex",
+      "nl_en": "What are the Sicilian equivalents of Italian words that express 'rabbia' (anger)?",
+      "nl_variants": {
+        "generated": "What are the Sicilian equivalents of Italian words that express 'rabbia' (anger)?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT ?italianWord ?sicilianWord\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    ?emotionEntry elita:HasEmotion elita:Rabbia .\n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    ?italianLexEntry vartrans:translatableAs ?sicilianLexEntry .\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> .\n    ?sicilianLemma ontolex:writtenRep ?sicilianWord .\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "sicilianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "GRAPH <http://w3id.org/elita>",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2002,
+      "category": "complex",
+      "nl_en": "Can you find Parmigiano dialect words that translate Italian words carrying the emotion of 'paura' (fear)?",
+      "nl_variants": {
+        "generated": "Can you find Parmigiano dialect words that translate Italian words carrying the emotion of 'paura' (fear)?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\n\nSELECT ?italianWord ?parmigianoWord\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    ?emotionEntry elita:HasEmotion elita:Paura .\n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    ?italianLexEntry vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> .\n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "GRAPH <http://w3id.org/elita>",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2003,
+      "category": "complex",
+      "nl_en": "List all Sicilian words that are translations of Italian words annotated with the emotion of disgust.",
+      "nl_variants": {
+        "generated": "List all Sicilian words that are translations of Italian words annotated with the emotion of disgust."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT ?italianWord ?sicilianWord\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    ?emotionEntry elita:HasEmotion elita:Disgusto .\n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    ?italianLexEntry vartrans:translatableAs ?sicilianLexEntry .\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> .\n    ?sicilianLemma ontolex:writtenRep ?sicilianWord .\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "sicilianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "GRAPH <http://w3id.org/elita>",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2004,
+      "category": "complex",
+      "nl_en": "How do you say in Parmigiano the Italian words that convey surprise?",
+      "nl_variants": {
+        "generated": "How do you say in Parmigiano the Italian words that convey surprise?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\n\nSELECT ?italianWord ?parmigianoWord\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    ?emotionEntry elita:HasEmotion elita:Sorpresa .\n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    ?italianLexEntry vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> .\n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "GRAPH <http://w3id.org/elita>",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2005,
+      "category": "complex",
+      "nl_en": "Which Italian words expressing joy or trust have translations in the Sicilian dialect?",
+      "nl_variants": {
+        "generated": "Which Italian words expressing joy or trust have translations in the Sicilian dialect?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT DISTINCT ?italianWord ?dialectWord ?emotionLabel\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    VALUES ?emotion { elita:Gioia elita:Fiducia }\n    ?emotionEntry elita:HasEmotion ?emotion .\n    ?emotion rdfs:label ?emotionLabel .\n\n    ?translationEntry ontolex:canonicalForm ?italianLemma .\n    ?translationEntry vartrans:translatableAs ?sicilianLexEntry .\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> .\n    ?sicilianLemma ontolex:writtenRep ?dialectWord .\n}\nORDER BY ?emotionLabel ?italianWord\nLIMIT 100",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "dialectWord",
+          "emotionLabel"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2006,
+      "category": "complex",
+      "nl_en": "Find Italian words associated with sadness or surprise and show their Parmigiano dialect equivalents.",
+      "nl_variants": {
+        "generated": "Find Italian words associated with sadness or surprise and show their Parmigiano dialect equivalents."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\n\nSELECT DISTINCT ?italianWord ?dialectWord ?emotionLabel\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    VALUES ?emotion { elita:Tristezza elita:Sorpresa }\n    ?emotionEntry elita:HasEmotion ?emotion .\n    ?emotion rdfs:label ?emotionLabel .\n\n    ?translationEntry ontolex:canonicalForm ?italianLemma .\n    ?translationEntry vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> .\n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?dialectWord .\n}\nORDER BY ?emotionLabel ?italianWord\nLIMIT 100",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "dialectWord",
+          "emotionLabel"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2007,
+      "category": "complex",
+      "nl_en": "What are the Sicilian translations of Italian words that convey anger or disgust?",
+      "nl_variants": {
+        "generated": "What are the Sicilian translations of Italian words that convey anger or disgust?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT DISTINCT ?italianWord ?dialectWord ?emotionLabel\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    VALUES ?emotion { elita:Rabbia elita:Disgusto }\n    ?emotionEntry elita:HasEmotion ?emotion .\n    ?emotion rdfs:label ?emotionLabel .\n\n    ?translationEntry ontolex:canonicalForm ?italianLemma .\n    ?translationEntry vartrans:translatableAs ?sicilianLexEntry .\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> .\n    ?sicilianLemma ontolex:writtenRep ?dialectWord .\n}\nORDER BY ?emotionLabel ?italianWord\nLIMIT 100",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "dialectWord",
+          "emotionLabel"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2008,
+      "category": "complex",
+      "nl_en": "List Italian words related to anticipation or fear together with their Parmigiano dialect translations.",
+      "nl_variants": {
+        "generated": "List Italian words related to anticipation or fear together with their Parmigiano dialect translations."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\n\nSELECT DISTINCT ?italianWord ?dialectWord ?emotionLabel\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    VALUES ?emotion { elita:Anticipazione elita:Paura }\n    ?emotionEntry elita:HasEmotion ?emotion .\n    ?emotion rdfs:label ?emotionLabel .\n\n    ?translationEntry ontolex:canonicalForm ?italianLemma .\n    ?translationEntry vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> .\n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?dialectWord .\n}\nORDER BY ?emotionLabel ?italianWord\nLIMIT 100",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "dialectWord",
+          "emotionLabel"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2009,
+      "category": "complex",
+      "nl_en": "Show me Italian words that express positive emotions like joy, trust, or anticipation along with their translations in both Sicilian and Parmigiano dialects.",
+      "nl_variants": {
+        "generated": "Show me Italian words that express positive emotions like joy, trust, or anticipation along with their translations in both Sicilian and Parmigiano dialects."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT DISTINCT ?italianWord ?dialectWord ?dialectName ?emotionLabel\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    VALUES ?emotion { elita:Gioia elita:Fiducia elita:Anticipazione }\n    ?emotionEntry elita:HasEmotion ?emotion .\n    ?emotion rdfs:label ?emotionLabel .\n\n    ?translationEntry ontolex:canonicalForm ?italianLemma .\n    ?translationEntry vartrans:translatableAs ?dialectLexEntry .\n    ?dialectLexEntry ontolex:canonicalForm ?dialectLemma .\n    ?dialectLemma dcterms:isPartOf ?dialectLemmaBank .\n    ?dialectLemma ontolex:writtenRep ?dialectWord .\n\n    FILTER(regex(str(?dialectLemmaBank), \"Dialetto\", \"i\"))\n\n    BIND(REPLACE(STR(?dialectLemmaBank), \"^.*/Dialetto([^/]+)/.*$\", \"$1\") AS ?dialectName)\n}\nORDER BY ?emotionLabel ?dialectName ?italianWord\nLIMIT 100",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "dialectWord",
+          "emotionLabel"
+        ],
+        "secondary": [
+          "dialectName"
+        ],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2015,
+      "category": "emotion",
+      "nl_en": "Which emotions in the ELIta dataset have a positive average Sentix polarity score, and what is that score?",
+      "nl_variants": {
+        "generated": "Which emotions in the ELIta dataset have a positive average Sentix polarity score, and what is that score?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nSELECT ?emotion (AVG(xsd:float(?polarityValue)) AS ?avgPolarityValue)\nWHERE {\n  ?italianLemma a lila:Lemma .\n  ?emotionEntry ontolex:canonicalForm ?italianLemma .\n  ?emotionEntry elita:HasEmotion ?emotion .\n  ?polarityEntry ontolex:canonicalForm ?italianLemma .\n  ?polarityEntry marl:hasPolarityValue ?polarityValue .\n}\nGROUP BY ?emotion\nHAVING (AVG(xsd:float(?polarityValue)) > 0)\nORDER BY DESC(?avgPolarityValue)",
+      "patterns": [
+        "EMOTION_LEXICON"
+      ],
+      "answer_variables": {
+        "primary": [
+          "emotion"
+        ],
+        "secondary": [],
+        "aggregates": [
+          "avgPolarityValue"
+        ],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "AVG",
+        "GRAPH <http://w3id.org/elita>",
+        "GROUP BY",
+        "ORDER BY",
+        "elita:HasEmotion",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2016,
+      "category": "emotion",
+      "nl_en": "For Italian lemmas annotated with the emotion Joy in ELIta, what is the average Sentix polarity score?",
+      "nl_variants": {
+        "generated": "For Italian lemmas annotated with the emotion Joy in ELIta, what is the average Sentix polarity score?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nSELECT ?emotionLabel (AVG(xsd:float(?polarityValue)) AS ?avgPolarityValue)\nWHERE {\n  ?italianLemma a lila:Lemma .\n  ?emotionEntry ontolex:canonicalForm ?italianLemma .\n  ?emotionEntry elita:HasEmotion elita:Gioia .\n  ?polarityEntry ontolex:canonicalForm ?italianLemma .\n  ?polarityEntry marl:hasPolarityValue ?polarityValue .\n  elita:Gioia rdfs:label ?emotionLabel .\n}\nGROUP BY ?emotionLabel\nORDER BY DESC(?avgPolarityValue)",
+      "patterns": [
+        "EMOTION_LEXICON"
+      ],
+      "answer_variables": {
+        "primary": [
+          "emotionLabel"
+        ],
+        "secondary": [],
+        "aggregates": [
+          "avgPolarityValue"
+        ],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "AVG",
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "GROUP BY",
+        "ORDER BY",
+        "elita:HasEmotion",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2017,
+      "category": "emotion",
+      "nl_en": "Among emotions with a negative average Sentix polarity score, which ones appear in the ELIta dataset for Italian lemmas?",
+      "nl_variants": {
+        "generated": "Among emotions with a negative average Sentix polarity score, which ones appear in the ELIta dataset for Italian lemmas?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nSELECT ?emotion (AVG(xsd:float(?polarityValue)) AS ?avgPolarityValue)\nWHERE {\n  ?italianLemma a lila:Lemma .\n  ?emotionEntry ontolex:canonicalForm ?italianLemma .\n  ?emotionEntry elita:HasEmotion ?emotion .\n  ?polarityEntry ontolex:canonicalForm ?italianLemma .\n  ?polarityEntry marl:hasPolarityValue ?polarityValue .\n}\nGROUP BY ?emotion\nHAVING (AVG(xsd:float(?polarityValue)) < 0)\nORDER BY ASC(?avgPolarityValue)",
+      "patterns": [
+        "EMOTION_LEXICON"
+      ],
+      "answer_variables": {
+        "primary": [
+          "emotion"
+        ],
+        "secondary": [],
+        "aggregates": [
+          "avgPolarityValue"
+        ],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "AVG",
+        "GRAPH <http://w3id.org/elita>",
+        "GROUP BY",
+        "ORDER BY",
+        "elita:HasEmotion",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2018,
+      "category": "emotion",
+      "nl_en": "What is the average Sentix polarity score for Italian lemmas associated with the emotion Sadness in the ELIta dataset?",
+      "nl_variants": {
+        "generated": "What is the average Sentix polarity score for Italian lemmas associated with the emotion Sadness in the ELIta dataset?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nSELECT ?emotionLabel (AVG(xsd:float(?polarityValue)) AS ?avgPolarityValue)\nWHERE {\n  ?italianLemma a lila:Lemma .\n  ?emotionEntry ontolex:canonicalForm ?italianLemma .\n  ?emotionEntry elita:HasEmotion elita:Tristezza .\n  ?polarityEntry ontolex:canonicalForm ?italianLemma .\n  ?polarityEntry marl:hasPolarityValue ?polarityValue .\n  elita:Tristezza rdfs:label ?emotionLabel .\n}\nGROUP BY ?emotionLabel\nORDER BY ASC(?avgPolarityValue)",
+      "patterns": [
+        "EMOTION_LEXICON"
+      ],
+      "answer_variables": {
+        "primary": [
+          "emotionLabel"
+        ],
+        "secondary": [],
+        "aggregates": [
+          "avgPolarityValue"
+        ],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "AVG",
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "GROUP BY",
+        "ORDER BY",
+        "elita:HasEmotion",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2019,
+      "category": "complex",
+      "nl_en": "Which Parmigiano dialect words correspond to Italian words that carry a negative sentiment?",
+      "nl_variants": {
+        "generated": "Which Parmigiano dialect words correspond to Italian words that carry a negative sentiment?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT DISTINCT ?italianWord ?parmigianoWord ?polarityValue ?polarityLabel\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n    ?italianLemma dcterms:isPartOf <http://liita.it/data/id/lemma/LemmaBank> .\n    \n    ?polarityEntry ontolex:canonicalForm ?italianLemma .\n    ?polarityEntry marl:hasPolarity ?polarity .\n    ?polarityEntry marl:hasPolarityValue ?polarityValue .\n    ?polarity rdfs:label ?polarityLabel .\n    \n    FILTER( STR(?polarityLabel) = \"Negative\")\n    \n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    \n    ?italianLexEntry vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma dcterms:isPartOf <http://liita.it/data/id/DialettoParmigiano/lemma/LemmaBank> .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}\nORDER BY ASC(?polarityValue)\nLIMIT 50",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord",
+          "polarityLabel"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2020,
+      "category": "emotion",
+      "nl_en": "How many lemmas in LiITA are associated with the emotion Joy?",
+      "nl_variants": {
+        "generated": "How many lemmas in LiITA are associated with the emotion Joy?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n\nSELECT (COUNT(*) AS ?count)\nWHERE {\n  ?italianLemma a lila:Lemma .\n  ?emotionEntry ontolex:canonicalForm ?italianLemma .\n  ?emotionEntry elita:HasEmotion elita:Gioia .\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "COUNT_ENTITIES"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2021,
+      "category": "emotion",
+      "nl_en": "What is the distribution of emotions in LiITA broken down by part of speech?",
+      "nl_variants": {
+        "generated": "What is the distribution of emotions in LiITA broken down by part of speech?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nSELECT ?emotion ?pos (COUNT(*) AS ?count)\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma a lila:Lemma ;\n                  lila:hasPOS ?pos .\n  }\n  ?emotionEntry ontolex:canonicalForm ?italianLemma .\n  GRAPH <http://w3id.org/elita> {\n    ?emotionEntry elita:HasEmotion ?emotion .\n  }\n}\nGROUP BY ?emotion ?pos\nORDER BY ?emotion DESC(?count)",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "COUNT_ENTITIES"
+      ],
+      "answer_variables": {
+        "primary": [
+          "emotion"
+        ],
+        "secondary": [
+          "pos"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "GROUP BY",
+        "ORDER BY",
+        "elita:HasEmotion",
+        "lila:hasPOS",
+        "ontolex:canonicalForm"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2022,
+      "category": "complex",
+      "nl_en": "What is the total number of dialect translations available for words associated with Anger across all Italian dialects?",
+      "nl_variants": {
+        "generated": "What is the total number of dialect translations available for words associated with Anger across all Italian dialects?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT (COUNT(DISTINCT ?dialectWord) AS ?count)\nWHERE {\n    ?italianLemma a lila:Lemma .\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n\n    ?emotionEntry elita:HasEmotion elita:Rabbia .\n\n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n\n    ?italianLexEntry vartrans:translatableAs ?dialectLexEntry .\n\n    ?dialectLexEntry ontolex:canonicalForm ?dialectLemma .\n\n    ?dialectLemma dcterms:isPartOf ?dialectLemmaBank .\n\n    ?dialectLemma ontolex:writtenRep ?dialectWord .\n\n    FILTER(regex(str(?dialectLemmaBank), \"Dialetto\", \"i\"))\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "MULTI_TRANSLATION",
+        "COUNT_ENTITIES"
+      ],
+      "answer_variables": {
+        "primary": [
+          "dialectWord"
+        ],
+        "secondary": [],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2023,
+      "category": "complex",
+      "nl_en": "Grouped by part of speech, how many distinct dialect words exist for each emotion expressed by Italian lemmas?",
+      "nl_variants": {
+        "generated": "Grouped by part of speech, how many distinct dialect words exist for each emotion expressed by Italian lemmas?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT ?emotion ?pos (COUNT(DISTINCT ?dialectWord) AS ?count)\nWHERE {\n    GRAPH <http://liita.it/data> {\n        ?italianLemma a lila:Lemma ;\n                      lila:hasPOS ?pos .\n    }\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n\n    ?emotionEntry elita:HasEmotion ?emotion .\n\n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n\n    ?italianLexEntry vartrans:translatableAs ?dialectLexEntry .\n\n    ?dialectLexEntry ontolex:canonicalForm ?dialectLemma .\n\n    ?dialectLemma dcterms:isPartOf ?dialectLemmaBank .\n\n    ?dialectLemma ontolex:writtenRep ?dialectWord .\n\n    FILTER(regex(str(?dialectLemmaBank), \"Dialetto\", \"i\"))\n}\nGROUP BY ?emotion ?pos\nORDER BY ?emotion ?pos",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "MULTI_TRANSLATION",
+        "COUNT_ENTITIES"
+      ],
+      "answer_variables": {
+        "primary": [
+          "emotion"
+        ],
+        "secondary": [
+          "pos"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "GROUP BY",
+        "ORDER BY",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "lila:hasPOS",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2024,
+      "category": "semantic_combined",
+      "nl_en": "What are the specific types or subtypes that fall under the category of 'veicolo' (vehicle)?",
+      "nl_variants": {
+        "generated": "What are the specific types or subtypes that fall under the category of 'veicolo' (vehicle)?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?hyponymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n    FILTER ( STR(?writtenRep) = \"veicolo\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?sense lexinfo:hypernym ?hypoSense .\n\n    ?hyponymWord ontolex:sense ?hypoSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "hyponymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2025,
+      "category": "semantic_combined",
+      "nl_en": "What are the component parts that make up a 'building' according to the lexical database?",
+      "nl_variants": {
+        "generated": "What are the component parts that make up a 'building' according to the lexical database?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?hyponymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n    FILTER ( STR(?writtenRep) = \"edificio\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?meroSense lexinfo:partMeronym ?sense .\n\n    ?hyponymWord ontolex:sense ?meroSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "hyponymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2026,
+      "category": "semantic_combined",
+      "nl_en": "Can you list the parts or components associated with the word 'strumento' in the lexical knowledge base?",
+      "nl_variants": {
+        "generated": "Can you list the parts or components associated with the word 'strumento' in the lexical knowledge base?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?hyponymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n    FILTER ( STR(?writtenRep) = \"strumento\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?meroSense lexinfo:partMeronym ?sense .\n\n    ?hyponymWord ontolex:sense ?meroSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "hyponymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2027,
+      "category": "semantic_combined",
+      "nl_en": "What broader categories does the Italian word 'veicolo' (vehicle) belong to?",
+      "nl_variants": {
+        "generated": "What broader categories does the Italian word 'veicolo' (vehicle) belong to?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?hypernymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] .\n    FILTER ( STR(?italianWord) = \"veicolo\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?sense lexinfo:hyponym ?hypernymSense .\n\n    ?hypernymWord ontolex:sense ?hypernymSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "hypernymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2028,
+      "category": "semantic_combined",
+      "nl_en": "What are the parts or components that make up the Italian word 'animale' (animal)?",
+      "nl_variants": {
+        "generated": "What are the parts or components that make up the Italian word 'animale' (animal)?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?hypernymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] .\n    FILTER ( STR(?italianWord) = \"animale\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?meroSense lexinfo:partMeronym ?sense .\n\n    ?hypernymWord ontolex:sense ?meroSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "hypernymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2030,
+      "category": "complex",
+      "nl_en": "What are the hypernyms of the Italian word 'veicolo'?",
+      "nl_variants": {
+        "generated": "What are the hypernyms of the Italian word 'veicolo'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?hypernymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n    FILTER ( STR(?writtenRep) = \"veicolo\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?sense lexinfo:hyponym ?hypernymSense .\n\n    ?hypernymWord ontolex:sense ?hypernymSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION",
+        "POS_FILTER"
+      ],
+      "answer_variables": {
+        "primary": [
+          "hypernymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "lila:hasPOS",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2031,
+      "category": "complex",
+      "nl_en": "What are the part meronyms of the Italian word 'fiore', i.e. what parts does a flower have?",
+      "nl_variants": {
+        "generated": "What are the part meronyms of the Italian word 'fiore', i.e. what parts does a flower have?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?meronymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n    FILTER ( STR(?writtenRep) = \"fiore\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?meroSense lexinfo:partMeronym ?sense .\n\n    ?meronymWord ontolex:sense ?meroSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION",
+        "POS_FILTER"
+      ],
+      "answer_variables": {
+        "primary": [
+          "meronymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "lila:hasPOS",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2032,
+      "category": "complex",
+      "nl_en": "Can you find the hypernyms of the Italian word 'strumento' in the lexical database?",
+      "nl_variants": {
+        "generated": "Can you find the hypernyms of the Italian word 'strumento' in the lexical database?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?hypernymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n    FILTER ( STR(?writtenRep) = \"strumento\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?sense lexinfo:hyponym ?hypernymSense .\n\n    ?hypernymWord ontolex:sense ?hypernymSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION",
+        "POS_FILTER"
+      ],
+      "answer_variables": {
+        "primary": [
+          "hypernymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "lila:hasPOS",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2033,
+      "category": "complex",
+      "nl_en": "How does CompL-it define the Italian word 'casa'?",
+      "nl_variants": {
+        "generated": "How does CompL-it define the Italian word 'casa'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?definition\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n              ontolex:sense [ skos:definition ?definition ] .\n        FILTER(STR(?writtenRep) = \"casa\")\n    }\n}\nLIMIT 10",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2034,
+      "category": "complex",
+      "nl_en": "What definitions does the CompL-it resource provide for the Italian word 'acqua'?",
+      "nl_variants": {
+        "generated": "What definitions does the CompL-it resource provide for the Italian word 'acqua'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?definition\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n              ontolex:sense [ skos:definition ?definition ] .\n        FILTER(STR(?writtenRep) = \"acqua\")\n    }\n}\nLIMIT 10",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2035,
+      "category": "complex",
+      "nl_en": "Can you retrieve the lexical definition of 'sole' from the CompL-it knowledge base?",
+      "nl_variants": {
+        "generated": "Can you retrieve the lexical definition of 'sole' from the CompL-it knowledge base?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?definition\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n              ontolex:sense [ skos:definition ?definition ] .\n        FILTER(STR(?writtenRep) = \"sole\")\n    }\n}\nLIMIT 10",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2036,
+      "category": "complex",
+      "nl_en": "What is the meaning of the Italian term 'mano' as recorded in CompL-it?",
+      "nl_variants": {
+        "generated": "What is the meaning of the Italian term 'mano' as recorded in CompL-it?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?definition\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n              ontolex:sense [ skos:definition ?definition ] .\n        FILTER(STR(?writtenRep) = \"mano\")\n    }\n}\nLIMIT 10",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2037,
+      "category": "complex",
+      "nl_en": "According to CompL-it, how is the Italian word 'luce' defined?",
+      "nl_variants": {
+        "generated": "According to CompL-it, how is the Italian word 'luce' defined?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?definition\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n              ontolex:sense [ skos:definition ?definition ] .\n        FILTER(STR(?writtenRep) = \"luce\")\n    }\n}\nLIMIT 10",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2038,
+      "category": "semantic_combined",
+      "nl_en": "Which words have definitions that mention 'casa'?",
+      "nl_variants": {
+        "generated": "Which words have definitions that mention 'casa'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?word ?definition\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n          ontolex:sense [ skos:definition ?definition ] .\n    FILTER REGEX(?definition, \"casa\", \"i\")\n  }\n}",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "word",
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2039,
+      "category": "semantic_combined",
+      "nl_en": "Find all lexical entries whose sense definitions contain the word 'acqua'.",
+      "nl_variants": {
+        "generated": "Find all lexical entries whose sense definitions contain the word 'acqua'."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?word ?definition\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n          ontolex:sense [ skos:definition ?definition ] .\n    FILTER REGEX(?definition, \"acqua\", \"i\")\n  }\n}",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "word",
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2040,
+      "category": "semantic_combined",
+      "nl_en": "What words are defined using the term 'sole' in their descriptions?",
+      "nl_variants": {
+        "generated": "What words are defined using the term 'sole' in their descriptions?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?word ?definition\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n          ontolex:sense [ skos:definition ?definition ] .\n    FILTER REGEX(?definition, \"sole\", \"i\")\n  }\n}",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "word",
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2041,
+      "category": "semantic_combined",
+      "nl_en": "Retrieve entries from CompL-it whose definitions include a reference to 'mano'.",
+      "nl_variants": {
+        "generated": "Retrieve entries from CompL-it whose definitions include a reference to 'mano'."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?word ?definition\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n          ontolex:sense [ skos:definition ?definition ] .\n    FILTER REGEX(?definition, \"mano\", \"i\")\n  }\n}",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "word",
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2042,
+      "category": "semantic_combined",
+      "nl_en": "Show me words whose semantic definitions refer to 'luce'.",
+      "nl_variants": {
+        "generated": "Show me words whose semantic definitions refer to 'luce'."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?word ?definition\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n          ontolex:sense [ skos:definition ?definition ] .\n    FILTER REGEX(?definition, \"luce\", \"i\")\n  }\n}",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "word",
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2043,
+      "category": "complex",
+      "nl_en": "What verbs carry a very strong positive sentiment (>0.9), and what emotions and dictionary definitions are linked to them?",
+      "nl_variants": {
+        "generated": "What verbs carry a very strong positive sentiment (>0.9), and what emotions and dictionary definitions are linked to them?"
+      },
+      "sparql": "PREFIX elita: <http://w3id.org/elita/>\nPREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n\nSELECT DISTINCT ?italianWord ?emotionLabel ?polarityValue ?definition\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma a lila:Lemma ;\n                  lila:hasPOS lila:verb ;\n                  ontolex:writtenRep ?italianWord .\n  }\n  ?emotionEntry ontolex:canonicalForm ?italianLemma .\n  GRAPH <http://w3id.org/elita> {\n    ?emotionEntry elita:HasEmotion ?emotion .\n    ?emotion rdfs:label ?emotionLabel .\n  }\n  ?polarityEntry ontolex:canonicalForm ?italianLemma ;\n                 marl:hasPolarityValue ?polarityValue .\n  FILTER (?polarityValue > 0.9)\n  ?word ontolex:canonicalForm ?italianLemma .\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n          ontolex:sense [ skos:definition ?definition ] .\n  }\n}\nLIMIT 50",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "SENSE_DEFINITION",
+        "POS_FILTER"
+      ],
+      "answer_variables": {
+        "primary": [
+          "emotionLabel",
+          "definition"
+        ],
+        "secondary": [
+          "lexEntryLabel",
+          "sense"
+        ],
+        "aggregates": [],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "SERVICE",
+        "elita:HasEmotion",
+        "lila:hasPOS",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2044,
+      "category": "complex",
+      "nl_en": "Which Italian lemmas begin with the prefix 'dis', often indicating negation or reversal?",
+      "nl_variants": {
+        "generated": "Which Italian lemmas begin with the prefix 'dis', often indicating negation or reversal?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma a lila:Lemma ;\n                  ontolex:writtenRep ?italianWord .\n    FILTER regex(str(?italianWord), \"^dis\")\n  }\n}\nLIMIT 50",
+      "patterns": [
+        "MORPHO_REGEX",
+        "LEXICAL_FORM",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "ontolex:writtenRep",
+        "regex"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2045,
+      "category": "complex",
+      "nl_en": "List all Italian nouns whose spelling ends with 'zione', a suffix typically found in abstract nouns derived from verbs.",
+      "nl_variants": {
+        "generated": "List all Italian nouns whose spelling ends with 'zione', a suffix typically found in abstract nouns derived from verbs."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma a lila:Lemma ;\n                  lila:hasPOS lila:noun ;\n                  ontolex:writtenRep ?italianWord .\n    FILTER regex(str(?italianWord), \"zione$\")\n  }\n}\nLIMIT 50",
+      "patterns": [
+        "MORPHO_REGEX",
+        "LEXICAL_FORM",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep",
+        "regex"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2046,
+      "category": "complex",
+      "nl_en": "What Italian adjectives end with the suffix 'abile', commonly indicating possibility or capability?",
+      "nl_variants": {
+        "generated": "What Italian adjectives end with the suffix 'abile', commonly indicating possibility or capability?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma a lila:Lemma ;\n                  lila:hasPOS lila:adjective ;\n                  ontolex:writtenRep ?italianWord .\n    FILTER regex(str(?italianWord), \"abile$\")\n  }\n}\nLIMIT 50",
+      "patterns": [
+        "MORPHO_REGEX",
+        "LEXICAL_FORM",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep",
+        "regex"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2047,
+      "category": "complex",
+      "nl_en": "Can you find Italian verbs that start with 'ri', a prefix often used to express repetition or return to a previous state?",
+      "nl_variants": {
+        "generated": "Can you find Italian verbs that start with 'ri', a prefix often used to express repetition or return to a previous state?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma a lila:Lemma ;\n                  lila:hasPOS lila:verb ;\n                  ontolex:writtenRep ?italianWord .\n    FILTER regex(str(?italianWord), \"^ri\")\n  }\n}\nLIMIT 50",
+      "patterns": [
+        "MORPHO_REGEX",
+        "LEXICAL_FORM",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep",
+        "regex"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2048,
+      "category": "complex",
+      "nl_en": "Which Italian adverbs end with the suffix 'mente'?",
+      "nl_variants": {
+        "generated": "Which Italian adverbs end with the suffix 'mente'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma a lila:Lemma ;\n                  lila:hasPOS lila:adverb ;\n                  ontolex:writtenRep ?italianWord .\n    FILTER regex(str(?italianWord), \"mente$\")\n  }\n}\nLIMIT 50",
+      "patterns": [
+        "MORPHO_REGEX",
+        "LEXICAL_FORM",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep",
+        "regex"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2049,
+      "category": "complex",
+      "nl_en": "What Italian verbs start with the prefix 'dis'?",
+      "nl_variants": {
+        "generated": "What Italian verbs start with the prefix 'dis'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma a lila:Lemma ;\n                  lila:hasPOS lila:verb ;\n                  ontolex:writtenRep ?italianWord .\n    FILTER regex(str(?italianWord), \"^dis\")\n  }\n}\nLIMIT 50",
+      "patterns": [
+        "MORPHO_REGEX",
+        "LEXICAL_FORM",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep",
+        "regex"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2054,
+      "category": "complex",
+      "nl_en": "How many nouns exist in the Italian lemma dataset?",
+      "nl_variants": {
+        "generated": "How many nouns exist in the Italian lemma dataset?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(?italianLemma) AS ?count)\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma lila:hasPOS lila:noun .\n  }\n}\nLIMIT 10",
+      "patterns": [
+        "POS_FILTER",
+        "COUNT_ENTITIES",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2055,
+      "category": "complex",
+      "nl_en": "What is the total number of distinct adjectives recorded in the Italian lemma dataset?",
+      "nl_variants": {
+        "generated": "What is the total number of distinct adjectives recorded in the Italian lemma dataset?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(DISTINCT ?italianLemma) AS ?count)\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma lila:hasPOS lila:adjective .\n  }\n}\nLIMIT 10",
+      "patterns": [
+        "POS_FILTER",
+        "COUNT_ENTITIES",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "italianLemma"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2056,
+      "category": "complex",
+      "nl_en": "Can you tell me how many distinct adverbs are found in the Italian lemma dataset?",
+      "nl_variants": {
+        "generated": "Can you tell me how many distinct adverbs are found in the Italian lemma dataset?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-measure#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(DISTINCT ?italianLemma) AS ?count)\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma lila:hasPOS lila:adverb .\n  }\n}\nLIMIT 10",
+      "patterns": [
+        "POS_FILTER",
+        "COUNT_ENTITIES",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "italianLemma"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2057,
+      "category": "complex",
+      "nl_en": "What is the count of pronouns in the Italian lemma dataset?",
+      "nl_variants": {
+        "generated": "What is the count of pronouns in the Italian lemma dataset?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(?italianLemma) AS ?count)\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?italianLemma lila:hasPOS lila:pronoun .\n  }\n}\nLIMIT 10",
+      "patterns": [
+        "POS_FILTER",
+        "COUNT_ENTITIES",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2058,
+      "category": "complex",
+      "nl_en": "How many distinct written forms does each noun lemma have on average?",
+      "nl_variants": {
+        "generated": "How many distinct written forms does each noun lemma have on average?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?pos (AVG(?formCount) AS ?avgForms)\nWHERE {\n  GRAPH <http://liita.it/data> {\n    {\n      SELECT ?lemma ?pos (COUNT(DISTINCT ?wr) AS ?formCount)\n      WHERE {\n        ?lemma a lila:Lemma ;\n               lila:hasPOS lila:noun ;\n               lila:hasPOS ?pos ;\n               ontolex:writtenRep ?wr .\n      } GROUP BY ?lemma ?pos\n    }\n  }\n}\nGROUP BY ?pos\nLIMIT 10",
+      "patterns": [
+        "POS_FILTER",
+        "COUNT_ENTITIES",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "pos"
+        ],
+        "aggregates": [
+          "avgForms"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "AVG",
+        "COUNT",
+        "GRAPH",
+        "GROUP BY",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2059,
+      "category": "complex",
+      "nl_en": "What is the average total number of written forms per verb lemma?",
+      "nl_variants": {
+        "generated": "What is the average total number of written forms per verb lemma?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-after#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?pos (AVG(?formCount) AS ?avgForms)\nWHERE {\n  GRAPH <http://liita.it/data> {\n    {\n      SELECT ?lemma ?pos (COUNT(?wr) AS ?formCount)\n      WHERE {\n        ?lemma a lila:Lemma ;\n               lila:hasPOS lila:verb ;\n               lila:hasPOS ?pos ;\n               ontolex:writtenRep ?wr .\n      } GROUP BY ?lemma ?pos\n    }\n  }\n}\nGROUP BY ?pos\nLIMIT 10",
+      "patterns": [
+        "POS_FILTER",
+        "COUNT_ENTITIES",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "pos"
+        ],
+        "aggregates": [
+          "avgForms"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "AVG",
+        "COUNT",
+        "GRAPH",
+        "GROUP BY",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2060,
+      "category": "complex",
+      "nl_en": "On average, how many unique written representations do adjective lemmas have?",
+      "nl_variants": {
+        "generated": "On average, how many unique written representations do adjective lemmas have?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?pos (AVG(?formCount) AS ?avgForms)\nWHERE {\n  GRAPH <http://liita.it/data> {\n    {\n      SELECT ?lemma ?pos (COUNT(DISTINCT ?wr) AS ?formCount)\n      WHERE {\n        ?lemma a lila:Lemma ;\n               lila:hasPOS lila:adjective ;\n               lila:hasPOS ?pos ;\n               ontolex:writtenRep ?wr .\n      } GROUP BY ?lemma ?pos\n    }\n  }\n}\nGROUP BY ?pos\nLIMIT 10",
+      "patterns": [
+        "POS_FILTER",
+        "COUNT_ENTITIES",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "pos"
+        ],
+        "aggregates": [
+          "avgForms"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "AVG",
+        "COUNT",
+        "GRAPH",
+        "GROUP BY",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2062,
+      "category": "translation",
+      "nl_en": "What is the Parmigiano dialect equivalent of the Italian word 'pane'?",
+      "nl_variants": {
+        "generated": "What is the Parmigiano dialect equivalent of the Italian word 'pane'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord ?italianLemma ?parmigianoLemma ?parmigianoWord\nWHERE {\n    ?italianLemma ontolex:writtenRep ?italianWord .\n\n    ?italianLexEntry\n      ontolex:canonicalForm ?italianLemma ;\n      ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> ;\n      vartrans:translatableAs ?parmigianoLexEntry .\n\n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n\n    FILTER( STR(?italianWord) = \"pane\" )\n}\nLIMIT 100",
+      "patterns": [
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [
+          "italianLemma",
+          "parmigianoLemma"
+        ],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "LIMIT",
+        "dcterms:isPartOf",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2063,
+      "category": "translation",
+      "nl_en": "Find the Sicilian translation for the Italian word 'donna'.",
+      "nl_variants": {
+        "generated": "Find the Sicilian translation for the Italian word 'donna'."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord ?italianLemma ?sicilianLemma ?sicilianWord\nWHERE {\n    ?italianLemma ontolex:writtenRep ?italianWord .\n\n    ?translationEntry\n      ontolex:canonicalForm ?italianLemma ;\n      vartrans:translatableAs ?sicilianLexEntry .\n\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma ontolex:writtenRep ?sicilianWord ;\n                   dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> .\n\n    FILTER( STR(?italianWord) = \"donna\" )\n}\nLIMIT 100",
+      "patterns": [
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "sicilianWord"
+        ],
+        "secondary": [
+          "italianLemma",
+          "sicilianLemma"
+        ],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "LIMIT",
+        "dcterms:isPartOf",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2064,
+      "category": "translation",
+      "nl_en": "What does the word 'vino' translate to in the Parmigiano dialect?",
+      "nl_variants": {
+        "generated": "What does the word 'vino' translate to in the Parmigiano dialect?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord ?italianLemma ?parmigianoLemma ?parmigianoWord\nWHERE {\n    ?italianLemma ontolex:writtenRep ?italianWord .\n\n    ?italianLexEntry\n      ontolex:canonicalForm ?italianLemma ;\n      ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> ;\n      vartrans:translatableAs ?parmigianoLexEntry .\n\n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n\n    FILTER( STR(?italianWord) = \"vino\" )\n}\nLIMIT 100",
+      "patterns": [
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [
+          "italianLemma",
+          "parmigianoLemma"
+        ],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "LIMIT",
+        "dcterms:isPartOf",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2065,
+      "category": "translation",
+      "nl_en": "Can you show me how the word 'figlio' is expressed in the Sicilian dialect?",
+      "nl_variants": {
+        "generated": "Can you show me how the word 'figlio' is expressed in the Sicilian dialect?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord ?italianLemma ?sicilianLemma ?sicilianWord\nWHERE {\n    ?italianLemma ontolex:writtenRep ?italianWord .\n\n    ?translationEntry\n      ontolex:canonicalForm ?italianLemma ;\n      vartrans:translatableAs ?sicilianLexEntry .\n\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma ontolex:writtenRep ?sicilianWord ;\n                   dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> .\n\n    FILTER( STR(?italianWord) = \"figlio\" )\n}\nLIMIT 100",
+      "patterns": [
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "sicilianWord"
+        ],
+        "secondary": [
+          "italianLemma",
+          "sicilianLemma"
+        ],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "LIMIT",
+        "dcterms:isPartOf",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2066,
+      "category": "semantic_combined",
+      "nl_en": "How many distinct senses does the word 'banco' have in the lexical database?",
+      "nl_variants": {
+        "generated": "How many distinct senses does the word 'banco' have in the lexical database?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(?sense) as ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n          ontolex:sense ?sense .\n    FILTER(STR(?writtenRep) = \"banco\")\n  }\n}\nLIMIT 10",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2067,
+      "category": "semantic_combined",
+      "nl_en": "What is the total number of meanings recorded for the Italian word 'campo'?",
+      "nl_variants": {
+        "generated": "What is the total number of meanings recorded for the Italian word 'campo'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(?sense) as ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n          ontolex:sense ?sense .\n    FILTER(STR(?writtenRep) = \"campo\")\n  }\n}\nLIMIT 10",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2068,
+      "category": "semantic_combined",
+      "nl_en": "In how many ways can the word 'punto' be interpreted according to the semantic knowledge base?",
+      "nl_variants": {
+        "generated": "In how many ways can the word 'punto' be interpreted according to the semantic knowledge base?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(?sense) as ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n          ontolex:sense ?sense .\n    FILTER(STR(?writtenRep) = \"punto\")\n  }\n}\nLIMIT 10",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2069,
+      "category": "semantic_combined",
+      "nl_en": "How polysemous is the word 'capo'? How many senses does it have?",
+      "nl_variants": {
+        "generated": "How polysemous is the word 'capo'? How many senses does it have?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(?sense) as ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;\n          ontolex:sense ?sense .\n    FILTER(STR(?writtenRep) = \"capo\")\n  }\n}\nLIMIT 10",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2071,
+      "category": "semantic_combined",
+      "nl_en": "Which of the words 'banco', 'piano', and 'campo' has the most distinct meanings in Italian?",
+      "nl_variants": {
+        "generated": "Which of the words 'banco', 'piano', and 'campo' has the most distinct meanings in Italian?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?writtenRep (COUNT(DISTINCT ?sense) AS ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?lexicalEntry ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n    ?lexicalEntry ontolex:sense ?sense .\n    FILTER(regex(str(?writtenRep), \"^(banco|piano|campo)$\", \"i\"))\n  }\n}\nGROUP BY ?writtenRep\nORDER BY DESC(?count)",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "writtenRep"
+        ],
+        "secondary": [
+          "sense"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH",
+        "GROUP BY",
+        "ORDER BY",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2072,
+      "category": "semantic_combined",
+      "nl_en": "How polysemous are the Italian words 'punto', 'capo', and 'fine'? Rank them by number of senses.",
+      "nl_variants": {
+        "generated": "How polysemous are the Italian words 'punto', 'capo', and 'fine'? Rank them by number of senses."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?writtenRep (COUNT(DISTINCT ?sense) AS ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?lexicalEntry ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n    ?lexicalEntry ontolex:sense ?sense .\n    FILTER(regex(str(?writtenRep), \"^(punto|capo|fine)$\", \"i\"))\n  }\n}\nGROUP BY ?writtenRep\nORDER BY DESC(?count)",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "writtenRep"
+        ],
+        "secondary": [
+          "sense"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH",
+        "GROUP BY",
+        "ORDER BY",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2073,
+      "category": "semantic_combined",
+      "nl_en": "Compare the semantic richness of 'corso', 'campo', and 'capo' by counting how many senses each word has.",
+      "nl_variants": {
+        "generated": "Compare the semantic richness of 'corso', 'campo', and 'capo' by counting how many senses each word has."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?writtenRep (COUNT(DISTINCT ?sense) AS ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?lexicalEntry ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n    ?lexicalEntry ontolex:sense ?sense .\n    FILTER(regex(str(?writtenRep), \"^(corso|campo|capo)$\", \"i\"))\n  }\n}\nGROUP BY ?writtenRep\nORDER BY DESC(?count)",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "writtenRep"
+        ],
+        "secondary": [
+          "sense"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH",
+        "GROUP BY",
+        "ORDER BY",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2076,
+      "category": "complex",
+      "nl_en": "Show me Italian nouns that start with 'trist', along with their definitions, the emotions they evoke, their sentiment polarity, and how they are expressed in Sicilian.",
+      "nl_variants": {
+        "generated": "Show me Italian nouns that start with 'trist', along with their definitions, the emotions they evoke, their sentiment polarity, and how they are expressed in Sicilian."
+      },
+      "sparql": "PREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\n\nSELECT DISTINCT ?italianWord ?definition ?emotionLabel ?polarityValue ?sicilianWord\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?word ontolex:sense ?sense ;\n              ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n        ?sense skos:definition ?definition .\n        FILTER(REGEX(STR(?writtenRep), \"^trist\", \"i\"))\n    }\n\n    ?word ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://liita.it/data> {\n        ?italianLemma a lila:Lemma ;\n                      lila:hasPOS lila:noun ;\n                      ontolex:writtenRep ?italianWord .\n    }\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://w3id.org/elita> {\n        ?emotionEntry elita:HasEmotion ?emotion .\n        ?emotion rdfs:label ?emotionLabel .\n    }\n\n    ?polarityEntry ontolex:canonicalForm ?italianLemma ;\n                   marl:hasPolarity ?polarity ;\n                   marl:hasPolarityValue ?polarityValue .\n\n    ?sicilianEntry ontolex:canonicalForm ?italianLemma ;\n                   vartrans:translatableAs ?sicilianLexEntry .\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> ;\n                   ontolex:writtenRep ?sicilianWord .\n}\nLIMIT 50",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION",
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "POS_FILTER",
+        "MORPHO_REGEX"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "definition",
+          "emotionLabel",
+          "sicilianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "SERVICE",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "klab.ilc.cnr.it",
+        "lila:hasPOS",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "regex",
+        "skos:definition",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2077,
+      "category": "complex",
+      "nl_en": "Show me Italian nouns ending in 'zione' together with their meanings, emotional associations, polarity values, and how they are said in Sicilian.",
+      "nl_variants": {
+        "generated": "Show me Italian nouns ending in 'zione' together with their meanings, emotional associations, polarity values, and how they are said in Sicilian."
+      },
+      "sparql": "PREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\n\nSELECT DISTINCT ?italianWord ?definition ?emotionLabel ?polarityValue ?sicilianWord\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?word ontolex:sense ?sense ;\n              ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n        ?sense skos:definition ?definition .\n        FILTER(REGEX(STR(?writtenRep), \"zione$\", \"i\"))\n    }\n\n    ?word ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://liita.it/data> {\n        ?italianLemma a lila:Lemma ;\n                      lila:hasPOS lila:noun ;\n                      ontolex:writtenRep ?italianWord .\n    }\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://w3id.org/elita> {\n        ?emotionEntry elita:HasEmotion ?emotion .\n        ?emotion rdfs:label ?emotionLabel .\n    }\n\n    ?polarityEntry ontolex:canonicalForm ?italianLemma ;\n                   marl:hasPolarity ?polarity ;\n                   marl:hasPolarityValue ?polarityValue .\n\n    ?sicilianEntry ontolex:canonicalForm ?italianLemma ;\n                   vartrans:translatableAs ?sicilianLexEntry .\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> ;\n                   ontolex:writtenRep ?sicilianWord .\n}\nLIMIT 50",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION",
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "POS_FILTER",
+        "MORPHO_REGEX"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "definition",
+          "emotionLabel",
+          "sicilianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "SERVICE",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "klab.ilc.cnr.it",
+        "lila:hasPOS",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "regex",
+        "skos:definition",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2078,
+      "category": "complex",
+      "nl_en": "Retrieve Italian adjectives that start with 'trist', including their definitions, emotion labels, sentiment polarity, and Sicilian dialect forms.",
+      "nl_variants": {
+        "generated": "Retrieve Italian adjectives that start with 'trist', including their definitions, emotion labels, sentiment polarity, and Sicilian dialect forms."
+      },
+      "sparql": "PREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\n\nSELECT DISTINCT ?italianWord ?definition ?emotionLabel ?polarityValue ?sicilianWord\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?word ontolex:sense ?sense ;\n              ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n        ?sense skos:definition ?definition .\n        FILTER(REGEX(STR(?writtenRep), \"^trist\", \"i\"))\n    }\n\n    ?word ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://liita.it/data> {\n        ?italianLemma a lila:Lemma ;\n                      lila:hasPOS lila:adjective ;\n                      ontolex:writtenRep ?italianWord .\n    }\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://w3id.org/elita> {\n        ?emotionEntry elita:HasEmotion ?emotion .\n        ?emotion rdfs:label ?emotionLabel .\n    }\n\n    ?polarityEntry ontolex:canonicalForm ?italianLemma ;\n                   marl:hasPolarity ?polarity ;\n                   marl:hasPolarityValue ?polarityValue .\n\n    ?sicilianEntry ontolex:canonicalForm ?italianLemma ;\n                   vartrans:translatableAs ?sicilianLexEntry .\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> ;\n                   ontolex:writtenRep ?sicilianWord .\n}\nLIMIT 50",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION",
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "POS_FILTER",
+        "MORPHO_REGEX"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "definition",
+          "emotionLabel",
+          "sicilianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "SERVICE",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "klab.ilc.cnr.it",
+        "lila:hasPOS",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "regex",
+        "skos:definition",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "claude"
+    },
+    {
+      "id": 2079,
+      "category": "complex",
+      "nl_en": "What Parmigiano words express sadness when translated from Italian terms that convey sadness?",
+      "nl_variants": {
+        "generated": "What Parmigiano words express sadness when translated from Italian terms that convey sadness?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT ?italianWord ?parmigianoWord\nWHERE {\n    ?italianLemma a lila:Lemma .\n    \n    ?italianLemma ontolex:writtenRep ?italianWord .\n    \n    ?emotionLexEntry ontolex:canonicalForm ?italianLemma .\n    \n    ?emotionLexEntry elita:HasEmotion elita:Tristezza .\n    \n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    \n    ?italianLexEntry vartrans:translatableAs ?parmigianoLexEntry .\n    \n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> .\n    \n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    \n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "GRAPH <http://w3id.org/elita>",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2081,
+      "category": "complex",
+      "nl_en": "Which Parmigiano terms correspond to Italian words that evoke fear?",
+      "nl_variants": {
+        "generated": "Which Parmigiano terms correspond to Italian words that evoke fear?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT ?italianWord ?parmigianoWord\nWHERE {\n    ?italianLemma a lila:Lemma .\n    \n    ?italianLemma ontolex:writtenRep ?italianWord .\n    \n    ?emotionLexEntry ontolex:canonicalForm ?italianLemma .\n    \n    ?emotionLexEntry elita:HasEmotion elita:Paura .\n    \n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    \n    ?italianLexEntry vartrans:translatableAs ?parmigianoLexEntry .\n    \n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> .\n    \n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    \n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "GRAPH <http://w3id.org/elita>",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2082,
+      "category": "complex",
+      "nl_en": "Find Sicilian equivalents for Italian words that carry a sense of surprise.",
+      "nl_variants": {
+        "generated": "Find Sicilian equivalents for Italian words that carry a sense of surprise."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT ?italianWord ?sicilianWord\nWHERE {\n    ?italianLemma a lila:Lemma .\n    \n    ?italianLemma ontolex:writtenRep ?italianWord .\n    \n    ?emotionLexEntry ontolex:canonicalForm ?italianLemma .\n    \n    ?emotionLexEntry elita:HasEmotion elita:Sorpresa .\n    \n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    \n    ?italianLexEntry vartrans:translatableAs ?sicilianLexEntry .\n    \n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    \n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> .\n    \n    ?sicilianLemma ontolex:writtenRep ?sicilianWord .\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "sicilianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "GRAPH <http://w3id.org/elita>",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2089,
+      "category": "complex",
+      "nl_en": "What Parmigiano words convey the emotion of joy, often associated with happiness and excitement in Plutchik's wheel?",
+      "nl_variants": {
+        "generated": "What Parmigiano words convey the emotion of joy, often associated with happiness and excitement in Plutchik's wheel?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT DISTINCT ?italianWord ?parmigianoWord\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n    \n    ?emotionLexEntry ontolex:canonicalForm ?italianLemma .\n    ?emotionLexEntry elita:HasEmotion elita:Gioia .\n    \n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    \n    ?italianLexEntry vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> .\n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}\nORDER BY ?italianWord\nLIMIT 50",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2093,
+      "category": "complex",
+      "nl_en": "Which Parmigiano terms convey surprise, reflecting astonishment and amazement in emotional contexts?",
+      "nl_variants": {
+        "generated": "Which Parmigiano terms convey surprise, reflecting astonishment and amazement in emotional contexts?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT DISTINCT ?italianWord ?parmigianoWord\nWHERE {\n    ?italianLemma a lila:Lemma .\n    ?italianLemma ontolex:writtenRep ?italianWord .\n    \n    ?emotionLexEntry ontolex:canonicalForm ?italianLemma .\n    ?emotionLexEntry elita:HasEmotion elita:Sorpresa .\n    \n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n    \n    ?italianLexEntry vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> .\n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}\nORDER BY ?italianWord\nLIMIT 50",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2094,
+      "category": "emotion",
+      "nl_en": "Which emotions associated with Italian words tend to have the most negative Sentix polarity scores, and what is their average value?",
+      "nl_variants": {
+        "generated": "Which emotions associated with Italian words tend to have the most negative Sentix polarity scores, and what is their average value?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX xsd: <http://www.w3.org/2001/XMLSchema#>\n\nSELECT ?emotionLabel (AVG(xsd:float(?polarityValue)) AS ?avgPolarityValue)\nWHERE {\n  ?lemma a lila:Lemma .\n  ?emotionLexEntry ontolex:canonicalForm ?lemma .\n  ?emotionLexEntry elita:HasEmotion ?emotion .\n  ?polarityLexEntry ontolex:canonicalForm ?lemma .\n  ?polarityLexEntry marl:hasPolarityValue ?polarityValue .\n  ?emotion rdfs:label ?emotionLabel .\n  FILTER(xsd:float(?polarityValue) < 0)\n}\nGROUP BY ?emotionLabel\nORDER BY ASC(?avgPolarityValue)",
+      "patterns": [
+        "EMOTION_LEXICON"
+      ],
+      "answer_variables": {
+        "primary": [
+          "emotionLabel"
+        ],
+        "secondary": [],
+        "aggregates": [
+          "avgPolarityValue"
+        ],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "AVG",
+        "FILTER",
+        "GRAPH <http://w3id.org/elita>",
+        "GROUP BY",
+        "ORDER BY",
+        "elita:HasEmotion",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2096,
+      "category": "emotion",
+      "nl_en": "What is the total number of lemmas in the LiITA resource that have been annotated with any emotion in ELIta?",
+      "nl_variants": {
+        "generated": "What is the total number of lemmas in the LiITA resource that have been annotated with any emotion in ELIta?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\n\nSELECT (COUNT(DISTINCT ?italianLemma) as ?totalEmotionLemmas)\nWHERE {\n  ?italianLemma a lila:Lemma .\n  ?emotionEntry ontolex:canonicalForm ?italianLemma .\n  GRAPH <http://w3id.org/elita> {\n    ?emotionEntry elita:HasEmotion ?emotion .\n  }\n}",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "COUNT_ENTITIES"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "italianLemma"
+        ],
+        "aggregates": [
+          "totalEmotionLemmas"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2097,
+      "category": "emotion",
+      "nl_en": "Which emotion category has the fewest lemmas assigned to it in the ELIta annotations for LiITA?",
+      "nl_variants": {
+        "generated": "Which emotion category has the fewest lemmas assigned to it in the ELIta annotations for LiITA?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n\nSELECT ?emotion (COUNT(*) as ?count)\nWHERE {\n  ?italianLemma a lila:Lemma .\n  ?emotionEntry ontolex:canonicalForm ?italianLemma .\n  GRAPH <http://w3id.org/elita> {\n    ?emotionEntry elita:HasEmotion ?emotion .\n  }\n}\nGROUP BY ?emotion\nORDER BY ASC(?count)\nLIMIT 1",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "COUNT_ENTITIES"
+      ],
+      "answer_variables": {
+        "primary": [
+          "emotion"
+        ],
+        "secondary": [],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "GROUP BY",
+        "LIMIT",
+        "ORDER BY",
+        "elita:HasEmotion",
+        "ontolex:canonicalForm"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2098,
+      "category": "complex",
+      "nl_en": "Which emotions have the most diverse vocabulary when considering only nouns with translations in Sicilian?",
+      "nl_variants": {
+        "generated": "Which emotions have the most diverse vocabulary when considering only nouns with translations in Sicilian?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT ?emotion (COUNT(DISTINCT ?sicilianWord) AS ?count)\nWHERE {\n    GRAPH <http://liita.it/data> {\n        ?italianLemma a lila:Lemma ;\n                      lila:hasPOS lila:noun .\n    }\n\n    ?emotionLexEntry ontolex:canonicalForm ?italianLemma .\n\n    GRAPH <http://w3id.org/elita> {\n        ?emotionLexEntry elita:HasEmotion ?emotion .\n    }\n\n    ?italianLexEntry ontolex:canonicalForm ?italianLemma .\n\n    ?italianLexEntry vartrans:translatableAs ?sicilianLexEntry .\n\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> ;\n                   ontolex:writtenRep ?sicilianWord .\n}\nGROUP BY ?emotion\nORDER BY DESC(?count)",
+      "patterns": [
+        "EMOTION_LEXICON",
+        "MULTI_TRANSLATION",
+        "COUNT_ENTITIES"
+      ],
+      "answer_variables": {
+        "primary": [
+          "emotion"
+        ],
+        "secondary": [],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "GROUP BY",
+        "ORDER BY",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "lila:hasPOS",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2100,
+      "category": "semantic_combined",
+      "nl_en": "Can you list the parts that typically make up a flower?",
+      "nl_variants": {
+        "generated": "Can you list the parts that typically make up a flower?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?meronymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] .\n    FILTER ( STR(?italianWord) = \"fiore\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?meroSense lexinfo:partMeronym ?sense .\n\n    ?meronymWord ontolex:sense ?meroSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "meronymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2101,
+      "category": "semantic_combined",
+      "nl_en": "What are some approximate synonyms for the word 'cibo' (food) in Italian?",
+      "nl_variants": {
+        "generated": "What are some approximate synonyms for the word 'cibo' (food) in Italian?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?synonymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] .\n    FILTER ( STR(?italianWord) = \"cibo\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?sense lexinfo:approximateSynonym ?synSense .\n\n    ?synonymWord ontolex:sense ?synSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "synonymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:approximateSynonym",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2102,
+      "category": "semantic_combined",
+      "nl_en": "Which components or parts are commonly found in a building?",
+      "nl_variants": {
+        "generated": "Which components or parts are commonly found in a building?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?meronymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] .\n    FILTER ( STR(?italianWord) = \"edificio\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?meroSense lexinfo:partMeronym ?sense .\n\n    ?meronymWord ontolex:sense ?meroSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "meronymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2104,
+      "category": "complex",
+      "nl_en": "What types of vehicles are considered more general categories than 'veicolo' in Italian?",
+      "nl_variants": {
+        "generated": "What types of vehicles are considered more general categories than 'veicolo' in Italian?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?hypernymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] .\n    FILTER ( STR(?italianWord) = \"veicolo\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?sense lexinfo:hyponym ?hypernymSense .\n\n    ?hypernymWord ontolex:sense ?hypernymSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION",
+        "POS_FILTER"
+      ],
+      "answer_variables": {
+        "primary": [
+          "hypernymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "lila:hasPOS",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2105,
+      "category": "complex",
+      "nl_en": "Which parts make up an 'animale' according to Italian semantic relations?",
+      "nl_variants": {
+        "generated": "Which parts make up an 'animale' according to Italian semantic relations?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?partWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] .\n    FILTER ( STR(?italianWord) = \"animale\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?meroSense lexinfo:partMeronym ?sense .\n\n    ?partWord ontolex:sense ?meroSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION",
+        "POS_FILTER"
+      ],
+      "answer_variables": {
+        "primary": [
+          "partWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "lila:hasPOS",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2106,
+      "category": "complex",
+      "nl_en": "What broader categories of food include the Italian word 'cibo' as a specific example?",
+      "nl_variants": {
+        "generated": "What broader categories of food include the Italian word 'cibo' as a specific example?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?hypernymWord\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] .\n    FILTER ( STR(?italianWord) = \"cibo\" ) .\n\n    ?word ontolex:sense ?sense .\n    ?sense lexinfo:hyponym ?hypernymSense .\n\n    ?hypernymWord ontolex:sense ?hypernymSense .\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION",
+        "POS_FILTER"
+      ],
+      "answer_variables": {
+        "primary": [
+          "hypernymWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "lila:hasPOS",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2110,
+      "category": "complex",
+      "nl_en": "What is the lexical definition of 'terra' in Italian as recorded in CompL-it?",
+      "nl_variants": {
+        "generated": "What is the lexical definition of 'terra' in Italian as recorded in CompL-it?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?definition\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n            ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] ;\n                  ontolex:sense [ skos:definition ?definition ] .\n        FILTER ( STR(?italianWord) = \"terra\" ) .\n  }\n}\nLIMIT 10",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2115,
+      "category": "semantic_combined",
+      "nl_en": "Find Italian words with definitions that include the Italian term 'terra'.",
+      "nl_variants": {
+        "generated": "Find Italian words with definitions that include the term 'terra' (earth or land)."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord ?definition\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] ;\n          ontolex:sense [ skos:definition ?definition ] .\n    FILTER regex(?definition, \"terra\", \"i\")\n  }\n}\nLIMIT 20",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2116,
+      "category": "semantic_combined",
+      "nl_en": "Identify Italian vocabulary where the dictionary definition contains the Italian word 'mano'.",
+      "nl_variants": {
+        "generated": "Identify Italian vocabulary where the dictionary definition contains the word 'mano'."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?word ?definition\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ ontolex:writtenRep ?italianWord ] ;\n          ontolex:sense [ skos:definition ?definition ] .\n    FILTER regex(?definition, \"mano\", \"i\")\n  }\n}",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "word",
+          "definition"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "skos:definition"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2120,
+      "category": "complex",
+      "nl_en": "Find Italian nouns that end with the suffix 'ità', typically forming abstract nouns from adjectives.",
+      "nl_variants": {
+        "generated": "Find Italian nouns that end with the suffix 'ità', typically forming abstract nouns from adjectives."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?lemma a lila:Lemma ;\n           lila:hasPOS lila:noun ;\n           ontolex:writtenRep ?italianWord .\n    FILTER regex(str(?italianWord), \"ità$\")\n  }\n}\nLIMIT 50",
+      "patterns": [
+        "MORPHO_REGEX",
+        "LEXICAL_FORM",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep",
+        "regex"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2122,
+      "category": "complex",
+      "nl_en": "List Italian verbs that begin with the prefix 'ri'.",
+      "nl_variants": {
+        "generated": "List Italian verbs that begin with the prefix 'ri'."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?lemma lila:hasPOS lila:verb ;\n           ontolex:writtenRep ?italianWord .\n    FILTER regex(str(?italianWord), \"^ri\")\n  }\n}\nLIMIT 50",
+      "patterns": [
+        "MORPHO_REGEX",
+        "POS_FILTER",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep",
+        "regex"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2123,
+      "category": "complex",
+      "nl_en": "Can you find Italian nouns that express abstract concepts ending in 'ità'?",
+      "nl_variants": {
+        "generated": "Can you find Italian nouns that express abstract concepts ending in 'ità'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord\nWHERE {\n  GRAPH <http://liita.it/data> {\n    ?lemma lila:hasPOS lila:noun ;\n           ontolex:writtenRep ?italianWord .\n    FILTER regex(str(?italianWord), \"ità$\")\n  }\n}\nLIMIT 50",
+      "patterns": [
+        "MORPHO_REGEX",
+        "POS_FILTER",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep",
+        "regex"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2128,
+      "category": "complex",
+      "nl_en": "How many distinct written forms do Italian verbs typically have on average?",
+      "nl_variants": {
+        "generated": "How many distinct written forms do Italian verbs typically have on average?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (AVG(?formCount) AS ?avgForms)\nWHERE {\n  GRAPH <http://liita.it/data> {\n    {\n      SELECT ?lemma (COUNT(DISTINCT ?wr) AS ?formCount)\n      WHERE {\n        ?lemma a lila:Lemma ;\n               lila:hasPOS lila:verb ;\n               ontolex:writtenRep ?wr .\n      } GROUP BY ?lemma\n    }\n  }\n}\nLIMIT 1",
+      "patterns": [
+        "POS_FILTER",
+        "COUNT_ENTITIES",
+        "META_GRAPH"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [],
+        "aggregates": [
+          "avgForms"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "AVG",
+        "COUNT",
+        "GRAPH",
+        "GROUP BY",
+        "LIMIT",
+        "lila:hasPOS",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2132,
+      "category": "translation",
+      "nl_en": "List Sicilian words that are spelled exactly like their Italian counterparts when describing 'donna' (woman).",
+      "nl_variants": {
+        "generated": "List Sicilian words that are spelled exactly like their Italian counterparts when describing 'donna' (woman)."
+      },
+      "sparql": "PREFIX dcterms:  <http://purl.org/dc/terms/>\nPREFIX ontolex:  <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX skos:     <http://www.w3.org/2004/02/skos/core#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\n\nSELECT DISTINCT ?italianWR ?sicilianWR ?sicilianLemma\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word a ontolex:Word ;\n          ontolex:sense ?sense ;\n          ontolex:canonicalForm ?form .\n    ?form ontolex:writtenRep ?italianWR .\n    OPTIONAL { ?sense skos:definition ?definition }\n    FILTER(contains(str(?definition), \"donna\"))\n  }\n  ?word ontolex:canonicalForm ?liitaLemma .\n  ?lesicilianIta vartrans:translatableAs ?lesicilianSic ;\n                 ontolex:canonicalForm ?liitaLemma .\n  ?lesicilianSic ontolex:canonicalForm ?sicilianLemma .\n  ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> ;\n                 ontolex:writtenRep ?sicilianWR .\n  FILTER(STR(?sicilianWR) = STR(?italianWR))\n}",
+      "patterns": [
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWR",
+          "sicilianWR"
+        ],
+        "secondary": [
+          "sicilianLemma"
+        ],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "LIMIT",
+        "dcterms:isPartOf",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2134,
+      "category": "translation",
+      "nl_en": "What is the Parmigiano equivalent for the Italian word 'pane'?",
+      "nl_variants": {
+        "generated": "What is the Parmigiano equivalent for the Italian word 'pane'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?italianWord ?parmigianoWord\nWHERE {\n    ?italianLemma ontolex:writtenRep ?italianWord .\n    \n    ?italianLexEntry\n      ontolex:canonicalForm ?italianLemma ;\n      ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> ;\n      vartrans:translatableAs ?parmigianoLexEntry .\n    \n    ?parmigianoLexEntry ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n    \n    FILTER( STR(?italianWord) = \"pane\" )\n}\nLIMIT 100",
+      "patterns": [
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": []
+      },
+      "expected_components": [
+        "FILTER",
+        "LIMIT",
+        "dcterms:isPartOf",
+        "ontolex:canonicalForm",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2138,
+      "category": "semantic_combined",
+      "nl_en": "What is the total number of distinct senses for the Italian word 'banco'?",
+      "nl_variants": {
+        "generated": "What is the total number of distinct senses for the Italian word 'banco'?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(DISTINCT ?sense) as ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ \n      ontolex:writtenRep ?wr\n    ] ;\n          ontolex:sense ?sense .\n      FILTER(regex(str(?wr), \"^banco$\"))\n  }\n}",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "sense"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2139,
+      "category": "semantic_combined",
+      "nl_en": "How many separate definitions exist for 'campo' in Italian?",
+      "nl_variants": {
+        "generated": "How many separate definitions exist for 'campo' in Italian?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(DISTINCT ?sense) as ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ \n      ontolex:writtenRep ?wr\n    ] ;\n          ontolex:sense ?sense .\n      FILTER(regex(str(?wr), \"^campo$\"))\n  }\n}",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "sense"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2140,
+      "category": "semantic_combined",
+      "nl_en": "Can you tell me how many different interpretations the word 'punto' has?",
+      "nl_variants": {
+        "generated": "Can you tell me how many different interpretations the word 'punto' has?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(DISTINCT ?sense) as ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ \n      ontolex:writtenRep ?wr\n    ] ;\n          ontolex:sense ?sense .\n      FILTER(regex(str(?wr), \"^punto$\"))\n  }\n}",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "sense"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2141,
+      "category": "semantic_combined",
+      "nl_en": "What are the various meanings associated with 'capo' in Italian, and how many are there?",
+      "nl_variants": {
+        "generated": "What are the various meanings associated with 'capo' in Italian, and how many are there?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(DISTINCT ?sense) as ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ \n      ontolex:writtenRep ?wr\n    ] ;\n          ontolex:sense ?sense .\n      FILTER(regex(str(?wr), \"^capo$\"))\n  }\n}",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "sense"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2142,
+      "category": "semantic_combined",
+      "nl_en": "How many distinct senses does the Italian word 'fine' cover?",
+      "nl_variants": {
+        "generated": "How many distinct senses does the Italian word 'fine' cover?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT (COUNT(DISTINCT ?sense) as ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    ?word ontolex:canonicalForm [ \n      ontolex:writtenRep ?wr\n    ] ;\n          ontolex:sense ?sense .\n      FILTER(regex(str(?wr), \"^fine$\"))\n  }\n}",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [],
+        "secondary": [
+          "sense"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "GRAPH",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2143,
+      "category": "semantic_combined",
+      "nl_en": "Which of the Italian words 'banco', 'piano', 'campo', and 'punto' has the most varied meanings in the language?",
+      "nl_variants": {
+        "generated": "Which of the Italian words 'banco', 'piano', 'campo', and 'punto' has the most varied meanings in the language?"
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?lemma (COUNT(DISTINCT ?sense) AS ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    \n        ?lexicalEntry ontolex:canonicalForm [ ontolex:writtenRep ?lemma ] .\n        ?lexicalEntry ontolex:sense ?sense .\n        FILTER(regex(str(?lemma), \"^(banco|piano|campo|punto)$\", \"i\"))\n  }\n}\nGROUP BY ?lemma\nORDER BY DESC(?count)",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "lemma"
+        ],
+        "secondary": [
+          "sense"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH",
+        "GROUP BY",
+        "ORDER BY",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2144,
+      "category": "semantic_combined",
+      "nl_en": "How does the polysemy of 'capo', 'fine', and 'corso' compare in Italian? Rank them by the number of distinct senses.",
+      "nl_variants": {
+        "generated": "How does the polysemy of 'capo', 'fine', and 'corso' compare in Italian? Rank them by the number of distinct senses."
+      },
+      "sparql": "PREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\nPREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n\nSELECT ?lemma (COUNT(DISTINCT ?sense) AS ?count)\nWHERE {\n  SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n    \n        ?lexicalEntry ontolex:canonicalForm [ ontolex:writtenRep ?lemma ] .\n        ?lexicalEntry ontolex:sense ?sense .\n        FILTER(regex(str(?lemma), \"^(capo|fine|corso)$\", \"i\"))\n  }\n}\nGROUP BY ?lemma\nORDER BY DESC(?count)",
+      "patterns": [
+        "SENSE_COUNT",
+        "SERVICE_INTEGRATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "lemma"
+        ],
+        "secondary": [
+          "sense"
+        ],
+        "aggregates": [
+          "count"
+        ],
+        "numeric": []
+      },
+      "expected_components": [
+        "COUNT",
+        "FILTER",
+        "GRAPH",
+        "GROUP BY",
+        "ORDER BY",
+        "SERVICE",
+        "klab.ilc.cnr.it",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2148,
+      "category": "complex",
+      "nl_en": "What Italian terms for types of plants are associated with joy, and how do they translate into Parmigiano dialect while showing their sentiment polarity?",
+      "nl_variants": {
+        "generated": "What Italian terms for types of plants are associated with joy, and how do they translate into Parmigiano dialect while showing their sentiment polarity?"
+      },
+      "sparql": "PREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\n\nSELECT DISTINCT ?italianWord ?emotionLabel ?polarityValue ?parmigianoWord\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?piantaWord ontolex:canonicalForm [ ontolex:writtenRep ?piantaWr ] .\n        FILTER(STR(?piantaWr) = \"pianta\")\n        ?piantaWord ontolex:sense ?piantaSense .\n        ?piantaSense lexinfo:hypernym ?hyponymSense .\n        ?resultWord ontolex:sense ?hyponymSense .\n    }\n\n    ?resultWord ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://liita.it/data> {\n        ?italianLemma a lila:Lemma ;\n                      ontolex:writtenRep ?italianWord .\n    }\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://w3id.org/elita> {\n        ?emotionEntry elita:HasEmotion elita:Gioia .\n        elita:Gioia rdfs:label ?emotionLabel .\n    }\n\n    ?polarityEntry ontolex:canonicalForm ?italianLemma ;\n                   marl:hasPolarity ?polarity ;\n                   marl:hasPolarityValue ?polarityValue .\n\n    ?parmigianoEntry ontolex:canonicalForm ?italianLemma ;\n                     vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> ;\n                     ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}\nORDER BY DESC(?polarityValue)\nLIMIT 50",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION",
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "emotionLabel",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "SERVICE",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2149,
+      "category": "complex",
+      "nl_en": "Can you list Italian food items that are specific types of pasta and are associated with joyful emotions, including their Sicilian and Parmigiano translations and polarity values?",
+      "nl_variants": {
+        "generated": "Can you list Italian food items that are specific types of pasta and are associated with joyful emotions, including their Sicilian and Parmigiano translations and polarity values?"
+      },
+      "sparql": "PREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\n\nSELECT DISTINCT ?italianWord ?emotionLabel ?polarityValue ?sicilianWord ?parmigianoWord\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?ciboWord ontolex:canonicalForm [ ontolex:writtenRep ?ciboWr ] .\n        FILTER(STR(?ciboWr) = \"pasta\")\n        ?ciboWord ontolex:sense ?ciboSense .\n        ?ciboSense lexinfo:hypernym ?hyponymSense .\n        ?resultWord ontolex:sense ?hyponymSense .\n    }\n\n    ?resultWord ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://liita.it/data> {\n        ?italianLemma a lila:Lemma ;\n                      ontolex:writtenRep ?italianWord .\n    }\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://w3id.org/elita> {\n        ?emotionEntry elita:HasEmotion elita:Gioia .\n        elita:Gioia rdfs:label ?emotionLabel .\n    }\n\n    ?polarityEntry ontolex:canonicalForm ?italianLemma ;\n                   marl:hasPolarity ?polarity ;\n                   marl:hasPolarityValue ?polarityValue .\n\n    ?sicilianEntry ontolex:canonicalForm ?italianLemma ;\n                   vartrans:translatableAs ?sicilianLexEntry .\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> ;\n                   ontolex:writtenRep ?sicilianWord .\n\n    ?parmigianoEntry ontolex:canonicalForm ?italianLemma ;\n                     vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> ;\n                     ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}\nORDER BY DESC(?polarityValue)\nLIMIT 50",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION",
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "emotionLabel",
+          "sicilianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "SERVICE",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2150,
+      "category": "complex",
+      "nl_en": "Which components make up different types of vehicles in Italian, and what emotions do these parts evoke? Include their translations in Sicilian and sentiment scores.",
+      "nl_variants": {
+        "generated": "Which components make up different types of vehicles in Italian, and what emotions do these parts evoke? Include their translations in Sicilian and sentiment scores."
+      },
+      "sparql": "PREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX lime: <http://www.w3.org/ns/lemon/lime#>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\n\nSELECT DISTINCT ?italianWord ?emotionLabel ?polarityValue ?sicilianWord ?parmigianoWord\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?veicoloWord ontolex:canonicalForm [ ontolex:writtenRep ?veicoloWr ] .\n        FILTER(STR(?veicoloWr) = \"veicolo\")\n        ?veicoloWord ontolex:sense ?veicoloSense .\n        ?meronymSense lexinfo:partMeronym ?veicoloSense .\n        ?resultWord ontolex:sense ?meronymSense .\n    }\n\n    ?resultWord ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://liita.it/data> {\n        ?italianLemma a lila:Lemma ;\n                      ontolex:writtenRep ?italianWord .\n    }\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://w3id.org/elita> {\n        ?emotionEntry elita:HasEmotion ?emotion .\n        ?emotion rdfs:label ?emotionLabel .\n    }\n\n    ?polarityEntry ontolex:canonicalForm ?italianLemma ;\n                   marl:hasPolarity ?polarity ;\n                   marl:hasPolarityValue ?polarityValue .\n\n    ?sicilianEntry ontolex:canonicalForm ?italianLemma ;\n                   vartrans:translatableAs ?sicilianLexEntry .\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> ;\n                   ontolex:writtenRep ?sicilianWord .\n\n    ?parmigianoEntry ontolex:canonicalForm ?italianLemma ;\n                     vartrans:translatableAs ?parmigianoLexEntry .\n    ?parmigianoLexEntry ^lime:entry <http://liita.it/data/id/LexicalReources/DialettoParmigiano/Lexicon> ;\n                     ontolex:canonicalForm ?parmigianoLemma .\n    ?parmigianoLemma ontolex:writtenRep ?parmigianoWord .\n}\nORDER BY ?italianWord\nLIMIT 50",
+      "patterns": [
+        "SEMANTIC_RELATION",
+        "SERVICE_INTEGRATION",
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "MULTI_TRANSLATION"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "emotionLabel",
+          "sicilianWord",
+          "parmigianoWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "ORDER BY",
+        "SERVICE",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "klab.ilc.cnr.it",
+        "lexinfo:hypernym",
+        "lexinfo:partMeronym",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    },
+    {
+      "id": 2151,
+      "category": "complex",
+      "nl_en": "Can you list Italian nouns that start with 'gioi' and are associated with joy, showing their meanings, sentiment polarity, and how they're translated into Sicilian?",
+      "nl_variants": {
+        "generated": "Can you list Italian nouns that start with 'gioi' and are associated with joy, showing their meanings, sentiment polarity, and how they're translated into Sicilian?"
+      },
+      "sparql": "PREFIX dcterms: <http://purl.org/dc/terms/>\nPREFIX elita: <http://w3id.org/elita/>\nPREFIX lila: <http://lila-erc.eu/ontologies/lila/>\nPREFIX marl: <http://www.gsi.upm.es/ontologies/marl/ns#>\nPREFIX ontolex: <http://www.w3.org/ns/lemon/ontolex#>\nPREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\nPREFIX skos: <http://www.w3.org/2004/02/skos/core#>\nPREFIX vartrans: <http://www.w3.org/ns/lemon/vartrans#>\nPREFIX lexinfo: <http://www.lexinfo.net/ontology/3.0/lexinfo#>\n\nSELECT DISTINCT ?italianWord ?definition ?emotionLabel ?polarityValue ?sicilianWord\nWHERE {\n    SERVICE <https://klab.ilc.cnr.it/graphdb-compl-it/> {\n        ?word ontolex:sense ?sense ;\n              ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .\n        ?sense skos:definition ?definition .\n        FILTER(REGEX(STR(?writtenRep), \"^gioi\", \"i\"))\n    }\n\n    ?word ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://liita.it/data> {\n        ?italianLemma a lila:Lemma ;\n                      lila:hasPOS lila:noun ;\n                      ontolex:writtenRep ?italianWord .\n    }\n\n    ?emotionEntry ontolex:canonicalForm ?italianLemma .\n    GRAPH <http://w3id.org/elita> {\n        ?emotionEntry elita:HasEmotion elita:Gioia .\n        elita:Gioia rdfs:label ?emotionLabel .\n    }\n\n    ?polarityEntry ontolex:canonicalForm ?italianLemma ;\n                   marl:hasPolarity ?polarity ;\n                   marl:hasPolarityValue ?polarityValue .\n\n    ?sicilianEntry ontolex:canonicalForm ?italianLemma ;\n                   vartrans:translatableAs ?sicilianLexEntry .\n    ?sicilianLexEntry ontolex:canonicalForm ?sicilianLemma .\n    ?sicilianLemma dcterms:isPartOf <http://liita.it/data/id/DialettoSiciliano/lemma/LemmaBank> ;\n                   ontolex:writtenRep ?sicilianWord .\n}\nLIMIT 50",
+      "patterns": [
+        "SENSE_DEFINITION",
+        "SERVICE_INTEGRATION",
+        "EMOTION_LEXICON",
+        "TRANSLATION",
+        "POS_FILTER",
+        "MORPHO_REGEX"
+      ],
+      "answer_variables": {
+        "primary": [
+          "italianWord",
+          "definition",
+          "emotionLabel",
+          "sicilianWord"
+        ],
+        "secondary": [],
+        "aggregates": [],
+        "numeric": [
+          "polarityValue"
+        ]
+      },
+      "expected_components": [
+        "FILTER",
+        "GRAPH",
+        "GRAPH <http://w3id.org/elita>",
+        "LIMIT",
+        "SERVICE",
+        "dcterms:isPartOf",
+        "elita:HasEmotion",
+        "klab.ilc.cnr.it",
+        "lila:hasPOS",
+        "marl:hasPolarity",
+        "marl:hasPolarityValue",
+        "ontolex:canonicalForm",
+        "ontolex:sense",
+        "ontolex:writtenRep",
+        "regex",
+        "skos:definition",
+        "vartrans:translatableAs"
+      ],
+      "gold_results_hash": null,
+      "source_model": "mistral"
+    }
+  ]
+}

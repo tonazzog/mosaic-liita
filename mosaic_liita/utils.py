@@ -89,12 +89,17 @@ def extract_pattern_request(nl: str) -> Optional[Dict[str, Any]]:
 
     # 1) quoted text after pattern keywords
     # prefix
-    m = re.search(r"(starting with|starts with|inizia con)\s+['\"]([^'\"]+)['\"]", q)
+    m = re.search(r"(starting with|starts with|begins? with|beginning with|inizia con|cominciano? con)\s+['\"]([^'\"]+)['\"]", q)
     if m:
         return {"mode": "prefix", "text": m.group(2).strip()}
 
+    # prefix from "prefix X" / "the prefix 'X'"
+    m = re.search(r"(?:the\s+)?prefix\s+['\"]([^'\"]+)['\"]", q)
+    if m:
+        return {"mode": "prefix", "text": m.group(1).strip()}
+
     # suffix (also allow -ire)
-    m = re.search(r"(ending with|ends with|finisce con)\s+['\"]([^'\"]+)['\"]", q)
+    m = re.search(r"(ending with|ends with|ending in|ends in|finisce con)\s+['\"]([^'\"]+)['\"]", q)
     if m:
         return {"mode": "suffix", "text": m.group(2).strip()}
 
@@ -102,21 +107,43 @@ def extract_pattern_request(nl: str) -> Optional[Dict[str, Any]]:
     if m:
         return {"mode": "suffix", "text": m.group(2).strip()}
 
+    # suffix from "suffix X" / "the suffix 'X'"
+    m = re.search(r"(?:the\s+)?suffix\s+['\"]([^'\"]+)['\"]", q)
+    if m:
+        return {"mode": "suffix", "text": m.group(1).strip()}
+
     # contains
-    m = re.search(r"(contains|containing|che contiene|contenente)\s+['\"]([^'\"]+)['\"]", q)
+    m = re.search(r"(contains?|containing|che contiene|contenente)\s+['\"]([^'\"]+)['\"]", q)
     if m:
         return {"mode": "contains", "text": m.group(2).strip()}
 
     # 2) unquoted single-token fallback
-    m = re.search(r"(starting with|starts with|inizia con)\s+([^\s\.,;:]+)", q)
+    # Check "prefix X" / "suffix X" BEFORE generic "begins with X" so that
+    # "begin with the prefix dis" captures "dis" not "the".
+    m = re.search(r"(?:the\s+)?prefix\s+([^\s\.,;:'\"]+)", q)
     if m:
-        return {"mode": "prefix", "text": m.group(2).strip()}
+        return {"mode": "prefix", "text": m.group(1).strip()}
 
-    m = re.search(r"(ending with|ends with|finisce con)\s+([^\s\.,;:]+)", q)
+    m = re.search(r"(?:the\s+)?suffix\s+([^\s\.,;:'\"]+)", q)
     if m:
-        return {"mode": "suffix", "text": m.group(2).strip()}
+        return {"mode": "suffix", "text": m.group(1).strip()}
 
-    m = re.search(r"(contains|containing|che contiene|contenente)\s+([^\s\.,;:]+)", q)
+    # Generic "starts/begins with X" — skip determiners after "with"
+    m = re.search(r"(starting with|starts with|begins? with|beginning with|inizia con|cominciano? con)\s+(?:the\s+|a\s+|an\s+)?([^\s\.,;:]+)", q)
+    if m:
+        # Avoid capturing stopwords like "prefix"/"suffix" that have their
+        # own handlers above (already matched or not applicable).
+        text = m.group(2).strip()
+        if text not in ("prefix", "suffix", "the", "a", "an"):
+            return {"mode": "prefix", "text": text}
+
+    m = re.search(r"(ending with|ends with|finisce con)\s+(?:the\s+|a\s+|an\s+)?([^\s\.,;:]+)", q)
+    if m:
+        text = m.group(2).strip()
+        if text not in ("prefix", "suffix", "the", "a", "an"):
+            return {"mode": "suffix", "text": text}
+
+    m = re.search(r"(contains?|containing|che contiene|contenente)\s+([^\s\.,;:]+)", q)
     if m:
         return {"mode": "contains", "text": m.group(2).strip()}
 
@@ -137,6 +164,8 @@ def build_filter_for_var(var: str, mode: str, text: str) -> str:
     """
     safe = text.replace("\\", "\\\\").replace('"', '\\"')
 
+    if mode == "exact":
+        return f'FILTER(STR({var}) = "{safe}") .'
     if mode == "prefix":
         return f'FILTER(STRSTARTS(STR({var}), "{safe}")) .'
     if mode == "contains":
@@ -161,24 +190,26 @@ def map_pos(nl: str) -> Dict[str, Optional[str]]:
     q = re.sub(r"\s+", " ", nl.strip().lower())
 
     # (trigger words) -> (liita IRI, compl-it label)
+    # Order matters: more specific POS (e.g. "adverb", "pronoun") must come
+    # before shorter substrings ("verb", "noun") to avoid false matches.
     mapping = [
-        (["verb", "verbs", "verbo", "verbi"], "lila:verb", '"verb"'),
-        (["noun", "nouns", "sostantivo", "sostantivi", "nome", "nomi"], "lila:noun", '"noun"'),
         (["adjective", "adjectives", "aggettivo", "aggettivi"], "lila:adjective", '"adjective"'),
         (["adverb", "adverbs", "avverbio", "avverbi"], "lila:adverb", '"adverb"'),
         (["proper noun", "proper nouns", "nome proprio", "nomi propri"], "lila:proper_noun", '"proper noun"'),
         (["pronoun", "pronouns", "pronome", "pronomi"], "lila:pronoun", '"pronoun"'),
-        (["determiner", "determiners", "determinante", "determinanti"], "lila:determiner", '"determiner"'),
-        (["preposition", "prepositions", "adposition", "adpositions", "preposizione", "preposizioni"], "lila:adposition", '"adposition"'),
-        (["numeral", "numerals", "numero", "numeri"], "lila:numeral", '"numeral"'),
-        (["conjunction", "conjunctions", "congiunzione", "congiunzioni"], None, '"conjunction"'),
         (["interjection", "interjections", "interiezione", "interiezioni"], "lila:interjection", '"interjection"'),
+        (["preposition", "prepositions", "adposition", "adpositions", "preposizione", "preposizioni"], "lila:adposition", '"adposition"'),
+        (["conjunction", "conjunctions", "congiunzione", "congiunzioni"], None, '"conjunction"'),
+        (["determiner", "determiners", "determinante", "determinanti"], "lila:determiner", '"determiner"'),
+        (["numeral", "numerals", "numero", "numeri"], "lila:numeral", '"numeral"'),
         (["particle", "particles", "particella", "particelle"], "lila:particle", '"particle"'),
+        (["verb", "verbs", "verbo", "verbi"], "lila:verb", '"verb"'),
+        (["noun", "nouns", "sostantivo", "sostantivi", "nome", "nomi"], "lila:noun", '"noun"'),
     ]
 
     for triggers, liita_iri, complit_label in mapping:
         for t in triggers:
-            if t in q:
+            if re.search(rf"\b{re.escape(t)}\b", q):
                 return {"liita_pos_iri": liita_iri, "complit_pos_label": complit_label}
 
     return {"liita_pos_iri": None, "complit_pos_label": None}

@@ -67,12 +67,18 @@ class Planner:
         quoted = extract_quoted_strings(q)
 
         # --- Detect query intent flags ---
-        wants_semrel = contains_any(q, [
+        # Exclude "part of speech" before checking "part of" as a meronym cue
+        q_no_pos = re.sub(r"\bpart of speech\b", "", q)
+        wants_semrel = contains_any(q_no_pos, [
             "hyponym", "hyponyms", "iponim", "iponimi",
+            "subtype", "subtypes",                          # paraphrase for hyponym
             "hypernym", "hypernyms", "iperonim", "iperonimi",
+            "broader", "more general",                      # paraphrase for hypernym
+            "narrower", "more specific",                    # paraphrase for hyponym
             "synonym", "synonyms", "sinonim", "sinonimi",
             "antonym", "antonyms", "antonim", "antonimi", "opposite", "opposto",
             "meronym", "meronyms", "meronim", "meronimi", "part of", "parte di",
+            "component", "componente",                      # paraphrase for meronym
             "holonym", "holonyms", "olonim", "olonimi", "whole"
         ])
 
@@ -84,20 +90,35 @@ class Planner:
             "starting with", "starts with", "inizia con",
             "ending with", "ends with", "finisce con",
             "ending in", "ends in",
-            "contains", "containing", "che contiene", "contenente"
+            "contain", "contains", "containing", "che contiene", "contenente",
+            "mention", "mentioning", "include", "including",
+            "reference", "referencing", "about",
+            "menziona", "menzionano", "includono",
+            "riferimento", "riguarda", "riguardano",
         ])
 
         wants_liita_pattern = (not wants_complit_def) and contains_any(q, [
-            "starting with", "starts with", "inizia con",
+            "starting with", "starts with", "begins with", "begin with",
+            "beginning with", "inizia con", "cominciano con",
             "ending with", "ends with", "finisce con",
             "ending in", "ends in",
-            "contains", "containing", "che contiene", "contenente"
+            "contain", "contains", "containing", "che contiene", "contenente",
+            "prefix", "suffix",
         ]) and contains_any(q, ["lemma", "lemmas", "word", "words", "parola", "parole", "verbi", "verb", "noun", "sostantivi"])
 
         wants_sic = contains_any(q, ["siciliano", "sicilian"])
         wants_par = contains_any(q, ["parmigiano"])
         wants_sentix = contains_any(q, ["sentix", "polarity", "positive", "negative", "neutral", "polarità", "polarita"])
-        wants_elita = contains_any(q, ["elita", "emotion", "emozion", "gioia", "felicità", "felicita", "joy", "happiness"])
+        wants_elita = contains_any(q, [
+            "elita", "emotion", "emozion",
+            # All ELIta emotion names (Italian + English) so queries like
+            # "words associated with sadness" trigger the emotion path.
+            "gioia", "tristezza", "paura", "rabbia", "disgusto",
+            "sorpresa", "aspettativa", "fiducia", "amore",
+            "joy", "sadness", "fear", "anger", "disgust",
+            "surprise", "anticipation", "trust", "love",
+            "felicità", "felicita", "happiness",
+        ])
 
         wants_count = contains_any(q, [
             "count", "how many", "number of", "quantitative distribution",
@@ -119,8 +140,9 @@ class Planner:
             "lemma", "lemmas", "lemmata",
             "word", "words", "parola", "parole",
             "form", "forms",
-            "ending", "ends", "starting", "starts",
+            "ending", "ends", "starting", "starts", "begins", "beginning",
             "inizia", "finisce", "che iniziano", "che finiscono",
+            "comincia", "che cominciano",
         ])
 
         to_italian_cues = contains_any(q, [
@@ -146,44 +168,77 @@ class Planner:
         known_vars: Set[str] = set()
 
         # --- 1) CompL-IT semantic relation anchor ---
-        if wants_semrel:
-            seed = extract_relation_seed(q, quoted)
-            if seed:
-                rel = resolve_relation(nl=q, catalog=self.catalog)
-                rel_pred = rel["predicate_iri"]
-                rel_dir = rel["direction"]
+        semrel_seed = extract_relation_seed(q, quoted) if wants_semrel else None
+        if wants_semrel and semrel_seed:
+            rel = resolve_relation(nl=q, catalog=self.catalog)
+            rel_pred = rel["predicate_iri"]
+            rel_dir = rel["direction"]
 
-                if rel_dir == "both":
-                    rel_triple = (
-                        "{ ?seedSense " + rel_pred + " ?senseRel . } UNION "
-                        "{ ?senseRel " + rel_pred + " ?seedSense . }"
-                    )
-                elif rel_dir == "seed_to_rel":
-                    rel_triple = f"?seedSense {rel_pred} ?senseRel ."
-                else:
-                    rel_triple = f"?senseRel {rel_pred} ?seedSense ."
+            if rel_dir == "both":
+                rel_triple = (
+                    "{ ?seedSense " + rel_pred + " ?senseRel . } UNION "
+                    "{ ?senseRel " + rel_pred + " ?seedSense . }"
+                )
+            elif rel_dir == "seed_to_rel":
+                rel_triple = f"?seedSense {rel_pred} ?senseRel ."
+            else:
+                rel_triple = f"?senseRel {rel_pred} ?seedSense ."
 
-                bid = "COMPLIT_SEMREL_OF_SEED_LEMMA"
-                blocks.append(BlockCall(
-                    block_id=bid,
-                    slots={
-                        "seed_lemma": sparql_quote(seed),
-                        "seed_pos_filter": pos_filter,
-                        "rel_triple": rel_triple,
-                        "rel_extra": "",
-                    },
-                ))
-                known_vars |= self.R.get(bid).provides
+            bid = "COMPLIT_SEMREL_OF_SEED_LEMMA"
+            blocks.append(BlockCall(
+                block_id=bid,
+                slots={
+                    "seed_lemma": sparql_quote(semrel_seed),
+                    "seed_pos_filter": pos_filter,
+                    "rel_triple": rel_triple,
+                    "rel_extra": "",
+                },
+            ))
+            known_vars |= self.R.get(bid).provides
 
+            # Only join to LiITA when downstream enrichments are needed
+            # (translations, sentiment, emotions). For pure semrel queries
+            # the gold standard returns the CompL-IT Word IRI (?wordRel)
+            # directly without a LiITA join.
+            if wants_sic or wants_par or wants_sentix or wants_elita:
                 bid = "JOIN_WORDREL_TO_LIITA"
                 blocks.append(BlockCall(block_id=bid))
+                known_vars |= self.R.get(bid).provides
+
+        # --- 1b) CompL-IT sense counting ---
+        elif self._wants_sense_count(q, quoted):
+            words = quoted if quoted else []
+            if len(words) == 1:
+                bid = "COMPLIT_COUNT_SENSES_SINGLE"
+                blocks.append(BlockCall(
+                    block_id=bid,
+                    slots={"seed_lemma": sparql_quote(words[0])},
+                ))
+                known_vars |= self.R.get(bid).provides
+            elif len(words) > 1:
+                regex_alt = "|".join(re.escape(w) for w in words)
+                regex_filter = f'FILTER(regex(str(?writtenRep), "^({regex_alt})$", "i")) .'
+                bid = "COMPLIT_COUNT_SENSES_MULTI"
+                blocks.append(BlockCall(
+                    block_id=bid,
+                    slots={"wr_regex_filter": regex_filter},
+                ))
                 known_vars |= self.R.get(bid).provides
 
         # --- 2) CompL-IT definition filter by pattern ---
         elif wants_def_pattern:
             pat = extract_pattern_request(q)
             if not pat and quoted:
-                pat = {"mode": "prefix", "text": quoted[0]}
+                # "mention"/"include"/"reference" imply contains on definition text
+                if contains_any(q, [
+                    "mention", "mentioning", "include", "including",
+                    "reference", "referencing", "about",
+                    "menziona", "menzionano", "includono",
+                    "riferimento", "riguarda", "riguardano",
+                ]):
+                    pat = {"mode": "contains", "text": quoted[0]}
+                else:
+                    pat = {"mode": "prefix", "text": quoted[0]}
 
             def_filter = ""
             lemma_filter = ""
@@ -191,7 +246,17 @@ class Planner:
                 lemma_cues = contains_any(q, [
                     "word", "words", "lemma", "lemmas", "parola", "parole"
                 ])
-                if lemma_cues:
+                # "mention"/"include" implies searching within definition text,
+                # even when lemma cues are present (e.g. "words with definitions
+                # that mention 'casa'")
+                def_content_cues = contains_any(q, [
+                    "mention", "mentioning", "include", "including",
+                    "reference", "referencing",
+                    "menziona", "includono", "riferimento",
+                ])
+                if def_content_cues:
+                    def_filter = build_filter_for_var("?definition", pat["mode"], pat["text"])
+                elif lemma_cues:
                     lemma_filter = build_filter_for_var("?itLemmaString", pat["mode"], pat["text"])
                 else:
                     def_filter = build_filter_for_var("?definition", pat["mode"], pat["text"])
@@ -306,6 +371,19 @@ class Planner:
                 blocks.append(BlockCall(block_id=bind_block.id))
                 known_vars |= bind_block.provides
 
+        # --- 4b) COUNT + POS but no other anchor ---
+        elif wants_count and liita_pos_iri and not wants_semrel and not wants_complit_def:
+            pos_clause = f"?lemma lila:hasPOS {liita_pos_iri} ."
+            bid = "LIITA_LEMMA_FILTER_BY_PATTERN_AND_POS"
+            blocks.append(BlockCall(
+                block_id=bid,
+                slots={
+                    "pos_clause": pos_clause,
+                    "wr_filter": "",
+                },
+            ))
+            known_vars |= self.R.get(bid).provides
+
         # --- 5) Fallback: LiITA by writtenRep or list ---
         else:
             if quoted:
@@ -390,15 +468,23 @@ class Planner:
         order_by: Optional[str] = None
 
         def pick_count_var() -> Optional[str]:
-            for v in ["?liitaLemma", "?lemma", "?word", "?sicLemma", "?parLemma"]:
+            for v in ["?sense", "?liitaLemma", "?lemma", "?word", "?sicLemma", "?parLemma"]:
                 if v in known_vars:
                     return v
             return None
 
-        if wants_count:
+        is_sense_count = "?sense" in known_vars
+
+        if wants_count or is_sense_count:
             count_var = pick_count_var() or "?s"
             aggregates["?count"] = f"COUNT(DISTINCT {count_var})"
-            if count_by_pos and "?pos" in known_vars:
+
+            if is_sense_count and "?writtenRep" in known_vars and len(quoted) > 1:
+                # Multi-word sense count: group by word, order by count
+                select_vars = ["?writtenRep"]
+                group_by = ["?writtenRep"]
+                order_by = "ORDER BY DESC(?count)"
+            elif count_by_pos and "?pos" in known_vars:
                 select_vars = ["?pos"]
                 group_by = ["?pos"]
                 order_by = "ORDER BY DESC(?count)"
@@ -413,7 +499,7 @@ class Planner:
                 group_by = ["?lemma"]
                 having = "HAVING (COUNT(?wr) > 1)"
 
-        if not wants_count:
+        if not wants_count and not is_sense_count:
             if "?lemma" in known_vars:
                 select_vars.append("?lemma")
                 group_by.append("?lemma")
@@ -424,8 +510,13 @@ class Planner:
             if "?liitaLemma" in known_vars:
                 select_vars.append("?liitaLemma")
                 group_by.append("?liitaLemma")
+            elif "?wordRel" in known_vars:
+                # Pure semantic relation query (no LiITA join): the CompL-IT
+                # Word IRI is the primary output, matching gold's ?hyponymWord etc.
+                select_vars.append("?wordRel")
+                group_by.append("?wordRel")
 
-            if "?itLemmaString" in known_vars:
+            if "?itLemmaString" in known_vars and "?wordRel" not in select_vars:
                 select_vars.append("?itLemmaString")
                 # Don't group by word when definitions are primary output
                 if not (wants_complit_def and "?definition" in known_vars):
@@ -462,7 +553,7 @@ class Planner:
                 group_by += ["?parLemma", "?parWR"]
 
             group_by = list(dict.fromkeys(group_by))
-            order_by = "ORDER BY ?itLemmaString" if "?itLemmaString" in known_vars else None
+            order_by = "ORDER BY ?itLemmaString" if "?itLemmaString" in select_vars else None
 
             if aggregates and not group_by:
                 group_by = [v for v in select_vars if v.startswith("?")]
@@ -478,8 +569,28 @@ class Planner:
             group_by=group_by,
             having=having,
             order_by=order_by,
-            limit=None if wants_count else 200,
+            limit=None if (wants_count or is_sense_count) else 200,
         )
+
+    def _wants_sense_count(self, q: str, quoted: List[str]) -> bool:
+        """Check if the query asks for counting senses/meanings of specific words."""
+        if not quoted:
+            return False
+        sense_cues = contains_any(q, [
+            "sense", "senses", "meaning", "meanings",
+            "polysemous", "polysemy", "semantic richness",
+            "interpreted", "interpretations",
+            "definition", "definitions",
+            "sensi", "significati", "significato",
+            "polisemia", "polisemico",
+        ])
+        count_cues = contains_any(q, [
+            "count", "how many", "number of", "total number",
+            "quanti", "quante", "numero di",
+            "polysemous", "polysemy", "polisemia", "polisemico",
+            "most", "compare", "rank", "varied",
+        ])
+        return sense_cues and count_cues
 
     def _extract_emotion_terms(self, q: str, quoted: List[str]) -> List[str]:
         """Extract emotion terms from query."""
@@ -487,7 +598,12 @@ class Planner:
         for s in quoted:
             if s.strip():
                 terms.append(s.strip().lower())
-        for k in ["gioia", "felicità", "felicita", "joy", "happiness"]:
+        # Scan for all known emotion keywords (EMOTION_MAP keys cover both
+        # Italian and English names).  Also include common paraphrases.
+        _EMOTION_KEYWORDS = list(EMOTION_MAP.keys()) + [
+            "felicità", "felicita", "happiness",
+        ]
+        for k in _EMOTION_KEYWORDS:
             if re.search(rf"\b{re.escape(k)}\b", q):
                 terms.append(k)
         return list(dict.fromkeys(terms))

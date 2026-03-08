@@ -274,7 +274,7 @@ def make_registry() -> BlockRegistry:
     R.register(Block(
         id="ELITA_EMOTION_FILTER",
         requires={"?liitaLemma"},
-        provides={"?emotionLabel"},
+        provides={"?emotion", "?emotionLabel"},
         prefixes={"elita", "ontolex", "rdfs"},
         where=[
             "?elitaLemma ontolex:canonicalForm ?liitaLemma .",
@@ -342,7 +342,35 @@ def make_registry() -> BlockRegistry:
         ],
     ))
 
-    # L) Siciliano lemma pattern filter
+    # L) CompL-IT sense counting (single word)
+    R.register(Block(
+        id="COMPLIT_COUNT_SENSES_SINGLE",
+        requires=set(),
+        provides={"?sense", "?writtenRep"},
+        prefixes={"ontolex"},
+        service_iri=COMPLIT_SERVICE,
+        where=[
+            "?word ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] ;",
+            "      ontolex:sense ?sense .",
+            'FILTER(STR(?writtenRep) = {seed_lemma}) .',
+        ],
+    ))
+
+    # M) CompL-IT sense counting (multiple words)
+    R.register(Block(
+        id="COMPLIT_COUNT_SENSES_MULTI",
+        requires=set(),
+        provides={"?sense", "?writtenRep"},
+        prefixes={"ontolex"},
+        service_iri=COMPLIT_SERVICE,
+        where=[
+            "?lexicalEntry ontolex:canonicalForm [ ontolex:writtenRep ?writtenRep ] .",
+            "?lexicalEntry ontolex:sense ?sense .",
+            "{wr_regex_filter}",
+        ],
+    ))
+
+    # N) Siciliano lemma pattern filter
     R.register(Block(
         id="SICILIANO_LEMMA_FILTER_BY_PATTERN_AND_POS",
         requires=set(),

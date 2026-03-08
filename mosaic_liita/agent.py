@@ -65,9 +65,9 @@ AGENT_TOOLS: Dict[str, Dict[str, Any]] = {
         "description": "Find Italian lemmas in LiITA that match a pattern (starts with, ends with, contains). Use this for queries about Italian words/lemmas without needing definitions.",
         "block": "LIITA_LEMMA_FILTER_BY_PATTERN_AND_POS",
         "parameters": {
-            "pattern_type": {"type": "string", "enum": ["prefix", "suffix", "contains"], "description": "How to match the pattern", "required": True},
-            "pattern_text": {"type": "string", "description": "The text pattern to match", "required": True},
-            "pos_filter": {"type": "string", "enum": ["noun", "verb", "adjective", "adverb", None], "description": "Optional part-of-speech filter (uses LiITA POS)", "required": False},
+            "pattern_type": {"type": "string", "enum": ["exact", "prefix", "suffix", "contains"], "description": "How to match: 'exact' for a specific word (e.g. translate 'pane'), 'prefix'/'suffix'/'contains' for morphological patterns", "required": True},
+            "pattern_text": {"type": "string", "description": "The text to match. Use the bare word for 'exact' (e.g. 'pane'), a prefix/suffix for the others.", "required": True},
+            "pos_filter": {"type": "string", "enum": ["noun", "verb", "adjective", "adverb", None], "description": "Optional part-of-speech filter. MUST be one of the exact strings: 'noun', 'verb', 'adjective', 'adverb'. Do NOT use abbreviations (ADJ, ADV, VERB, etc.).", "required": False},
         },
         "provides": ["?lemma", "?wr"],
         "requires": [],
@@ -148,6 +148,19 @@ AGENT_TOOLS: Dict[str, Dict[str, Any]] = {
         "requires": ["?parLemma"],
     },
 
+    "get_pos": {
+        "description": "Get the part of speech (POS) for LiITA lemmas. Provides ?pos (IRI like lila:noun). Use this when you need to group or filter by POS category.",
+        "block_variants": {
+            "?lemma": "LIITA_LEMMA_POS",
+            "?liitaLemma": "LIITA_LEMMA_POS_FROM_LIITA",
+        },
+        "parameters": {
+            "source_var": {"type": "string", "enum": ["?lemma", "?liitaLemma"], "description": "The lemma variable to get POS for", "required": True},
+        },
+        "provides": ["?pos"],
+        "requires_one_of": ["?lemma", "?liitaLemma"],
+    },
+
     "get_sentiment": {
         "description": "Get sentiment polarity (positive/negative/neutral) from Sentix.",
         "block": "SENTIX_POLARITY",
@@ -157,12 +170,12 @@ AGENT_TOOLS: Dict[str, Dict[str, Any]] = {
     },
 
     "get_emotions": {
-        "description": "Get emotion annotations from ELIta. Can filter to specific emotions.",
+        "description": "Get emotion annotations from ELIta. Can filter to specific emotions. Provides ?emotion (IRI like elita:Gioia) and ?emotionLabel (string like 'Gioia'). Use ?emotion for grouping/counting, ?emotionLabel for display.",
         "block": "ELITA_EMOTION_FILTER",
         "parameters": {
             "emotions": {"type": "array", "items": "string", "description": "Optional list of emotions to filter (e.g., ['gioia', 'tristezza']). Leave empty for all emotions.", "required": False},
         },
-        "provides": ["?emotionLabel"],
+        "provides": ["?emotion", "?emotionLabel"],
         "requires": ["?liitaLemma"],
     },
 
@@ -178,12 +191,54 @@ AGENT_TOOLS: Dict[str, Dict[str, Any]] = {
         "requires": [],  # Will be inferred from variable
     },
 
+    "count_senses": {
+        "description": "Count the number of senses (meanings) a word has in CompL-IT. Use for queries about polysemy, 'how many senses/meanings does X have'. For multiple words, pass them all in the 'words' parameter.",
+        "parameters": {
+            "words": {"type": "array", "items": "string", "description": "One or more words to count senses for", "required": True},
+        },
+        "provides": ["?sense", "?writtenRep"],
+        "requires": [],
+    },
+
+    "aggregate_results": {
+        "description": (
+            "Compute an aggregate (AVG or COUNT) over results, with optional GROUP BY and HAVING. "
+            "Use for 'average polarity', 'mean score', 'distribution', etc. "
+            "For AVG on polarity values, use agg_function='AVG', agg_variable='?polarityValue'. "
+            "For COUNT, use agg_function='COUNT', agg_variable='?liitaLemma'. "
+            "HAVING filters on the aggregate value (e.g., '> 0' for positive, '< 0' for negative). "
+            "Use xsd_cast='float' when averaging string-typed numeric values like polarity scores."
+        ),
+        "type": "aggregation",
+        "parameters": {
+            "agg_function": {"type": "string", "enum": ["COUNT", "AVG", "SUM", "MIN", "MAX"], "description": "Aggregation function", "required": True},
+            "agg_variable": {"type": "string", "description": "Variable to aggregate (e.g., ?polarityValue, ?liitaLemma)", "required": True},
+            "distinct": {"type": "boolean", "description": "Use DISTINCT in aggregate (default false)", "required": False},
+            "xsd_cast": {"type": "string", "enum": ["float", "integer", None], "description": "Cast variable to xsd type before aggregating (needed for AVG on string-typed values)", "required": False},
+            "group_by": {"type": "array", "items": "string", "description": "Variables to group by (e.g., ['?emotion'])", "required": False},
+            "having_op": {"type": "string", "enum": [">", "<", ">=", "<=", "=", None], "description": "HAVING comparison operator on aggregate value", "required": False},
+            "having_value": {"type": "string", "description": "Value to compare in HAVING (e.g., '0')", "required": False},
+            "order": {"type": "string", "enum": ["asc", "desc", None], "description": "Sort order for the aggregate value", "required": False},
+            "limit": {"type": "integer", "description": "Limit number of results (e.g., 1 for 'fewest'/'most')", "required": False},
+        },
+        "provides": [],
+        "requires": [],
+    },
+
     "count_results": {
-        "description": "Count the results instead of listing them. Use for 'how many' queries.",
+        "description": (
+            "Count the results instead of listing them. Use for 'how many' queries. "
+            "IMPORTANT: include ALL dimensions that the question groups or breaks down by in group_by. "
+            "E.g. 'distribution of emotions by POS' → group_by=['?emotionLabel','?pos']. "
+            "For a single total with no breakdown, use group_by=[] (empty). "
+            "For superlative queries ('fewest', 'most'), set order='asc' or 'desc' and limit=1."
+        ),
         "type": "aggregation",
         "parameters": {
             "count_variable": {"type": "string", "description": "Variable to count (e.g., ?lemma, ?liitaLemma)", "required": True},
-            "group_by": {"type": "array", "items": "string", "description": "Optional variables to group by (e.g., ['?pos'] for count by POS)", "required": False},
+            "group_by": {"type": "array", "items": "string", "description": "Variables to group by. Include EVERY dimension mentioned in the question (e.g., ['?emotionLabel', '?pos'] for 'by emotion and POS'). Use [] for a single total.", "required": False},
+            "order": {"type": "string", "enum": ["asc", "desc", None], "description": "Sort order for the count: 'asc' for fewest/lowest, 'desc' for most/highest. Omit if no ordering needed.", "required": False},
+            "limit": {"type": "integer", "description": "Limit number of results (e.g., 1 for 'the fewest' or 'the most'). Omit if all results are needed.", "required": False},
         },
         "provides": ["?count"],
         "requires": [],
@@ -371,11 +426,29 @@ class QueryAgent:
                 continue
 
             if tool_def.get("type") == "aggregation":
-                # Capture aggregation parameters from the tool call
-                captured_aggregation = {
-                    "count_variable": step.params.get("count_variable", "?lemma"),
-                    "group_by": step.params.get("group_by", []),
-                }
+                if step.tool == "aggregate_results":
+                    # Rich aggregation: AVG, COUNT, etc. with HAVING
+                    captured_aggregation = {
+                        "agg_function": step.params.get("agg_function", "COUNT"),
+                        "agg_variable": step.params.get("agg_variable", "?lemma"),
+                        "distinct": step.params.get("distinct", False),
+                        "xsd_cast": step.params.get("xsd_cast"),
+                        "group_by": step.params.get("group_by") or [],
+                        "having_op": step.params.get("having_op"),
+                        "having_value": step.params.get("having_value"),
+                        "order": step.params.get("order"),
+                        "limit": step.params.get("limit"),
+                    }
+                else:
+                    # Legacy count_results tool
+                    captured_aggregation = {
+                        "agg_function": "COUNT",
+                        "agg_variable": step.params.get("count_variable", "?lemma"),
+                        "distinct": True,
+                        "group_by": step.params.get("group_by") or [],
+                        "order": step.params.get("order"),
+                        "limit": step.params.get("limit"),
+                    }
                 continue
 
             # Get block ID
@@ -412,20 +485,42 @@ class QueryAgent:
         # Build output specification
         select_vars, aggregates, group_by = self._build_output_spec(plan, known_vars, effective_aggregation)
 
-        # Determine order_by
+        # Determine order_by, having — prefer explicit LLM instruction, then defaults
+        agg_order = effective_aggregation.get("order") if effective_aggregation else None
+        agg_limit = effective_aggregation.get("limit") if effective_aggregation else None
+        having_op = effective_aggregation.get("having_op") if effective_aggregation else None
+        having_value = effective_aggregation.get("having_value") if effective_aggregation else None
+
+        # Find the aggregate alias for ordering/having
+        agg_alias = None
+        agg_expr_for_having = None
+        if aggregates:
+            agg_alias = list(aggregates.keys())[0]  # e.g., ?count or ?avgPolarityValue
+            agg_expr_for_having = list(aggregates.values())[0]
+
+        # Build HAVING clause
+        having = None
+        if having_op and having_value and agg_expr_for_having:
+            having = f"HAVING ({agg_expr_for_having} {having_op} {having_value})"
+
         order_by = None
-        if "?itLemmaString" in select_vars:
+        if agg_order and agg_alias:
+            order_by = f"ORDER BY {'ASC' if agg_order == 'asc' else 'DESC'}({agg_alias})"
+        elif "?itLemmaString" in select_vars:
             order_by = "ORDER BY ?itLemmaString"
-        elif "?count" in aggregates and group_by:
-            order_by = "ORDER BY DESC(?count)"
+        elif agg_alias and group_by:
+            order_by = f"ORDER BY DESC({agg_alias})"
+
+        limit = agg_limit if agg_limit else (None if aggregates else 200)
 
         return QuerySpec(
             blocks=blocks,
             select_vars=select_vars,
             aggregates=aggregates,
             group_by=group_by,
+            having=having,
             order_by=order_by,
-            limit=None if aggregates else 200,
+            limit=limit,
         )
 
     def validate_plan(self, plan: AgentPlan) -> ValidationResult:
@@ -541,6 +636,27 @@ When a query needs:
 - Emotions: First get ?liitaLemma, then use get_emotions
 - Additional filtering: Use filter_variable after the main query tools
 
+How to get ?liitaLemma:
+- If the query starts from a specific word pattern: use find_liita_lemmas_by_pattern (pattern_type/pattern_text) then bind_lemma_to_liita
+- If the query filters Italian words by emotion/sentiment (NO specific word): use find_liita_lemmas_by_pattern with pattern_type="contains" and pattern_text="" (empty = match all), then bind_lemma_to_liita, then get_emotions/get_sentiment
+- If the query starts from a CompL-IT word (?word from find_definitions_by_pattern): use join_to_liita with source_var="?word"
+- join_to_liita requires ?word or ?wordRel to already be available — it CANNOT be used as Step 1
+
+NEVER place get_emotions, get_sentiment, or join_to_liita as Step 1 — they always require variables from a preceding step.
+
+For translation queries (translate a specific word to a dialect):
+- Use find_liita_lemmas_by_pattern with pattern_type="exact" and pattern_text=<the word> to constrain to that word.
+- Always include ?wr in output_vars so the Italian word appears alongside the dialect word.
+
+For emotion + polarity queries (e.g., "average polarity by emotion", "which emotions have positive polarity"):
+- Use find_liita_lemmas_by_pattern (match all), bind_lemma_to_liita, get_emotions, get_sentiment
+- Use aggregate_results with agg_function="AVG", agg_variable="?polarityValue", xsd_cast="float", group_by=["?emotion"]
+- For "positive average" add having_op=">", having_value="0"; for "negative average" use having_op="<", having_value="0"
+- Group by ?emotion (IRI), NOT ?emotionLabel, for aggregation queries
+- For "distribution of emotions by POS", include group_by=["?emotion", "?pos"] and use aggregate_results with COUNT
+
+For "fewest"/"most" queries, use aggregate_results or count_results with order="asc"/"desc" and limit=1.
+
 Output JSON schema:
 {
   "reasoning": "Brief explanation of your decomposition approach",
@@ -591,19 +707,32 @@ Output your plan as JSON:"""
         # Extract JSON from response
         raw = raw.strip()
 
-        # Try to find JSON object
-        json_match = re.search(r'\{[\s\S]*\}', raw)
-        if not json_match:
+        # Try to find JSON object — use a balanced-brace scan to avoid
+        # greedily capturing text that follows the JSON block (which would
+        # produce "Extra data" parse errors when the model appends commentary).
+        start = raw.find('{')
+        if start == -1:
             raise ValueError(f"No JSON found in LLM response: {raw[:200]}")
+        depth = 0
+        end = start
+        for i, ch in enumerate(raw[start:], start):
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+        json_str = raw[start:end + 1]
 
         try:
-            data = json.loads(json_match.group())
+            data = json.loads(json_str)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in response: {e}")
 
         # Parse steps
         steps = []
-        for step_data in data.get("steps", []):
+        for step_data in (data.get("steps") or []):
             steps.append(ToolCall(
                 tool=step_data.get("tool", ""),
                 params=step_data.get("params", {}),
@@ -612,8 +741,8 @@ Output your plan as JSON:"""
         return AgentPlan(
             reasoning=data.get("reasoning", ""),
             steps=steps,
-            output_vars=data.get("output_vars", []),
-            filters=data.get("filters", []),
+            output_vars=data.get("output_vars") or [],
+            filters=data.get("filters") or [],
             aggregation=data.get("aggregation"),
         )
 
@@ -624,6 +753,11 @@ Output your plan as JSON:"""
         known_vars: Set[str],
     ) -> Optional[str]:
         """Resolve the actual block ID for a tool call."""
+        # Dynamic block selection for count_senses
+        if step.tool == "count_senses":
+            words = step.params.get("words", [])
+            return "COMPLIT_COUNT_SENSES_SINGLE" if len(words) <= 1 else "COMPLIT_COUNT_SENSES_MULTI"
+
         # Direct block mapping
         if "block" in tool_def:
             return tool_def["block"]
@@ -661,26 +795,31 @@ Output your plan as JSON:"""
             # Build relation triple
             rel_pred = self._get_relation_predicate(rel_type)
 
-            # Determine direction based on relation type
-            # - hyponym: seed -> rel (seed has rel as hyponym)
-            # - hypernym: rel -> seed (rel has seed as hyponym, i.e., seed is hypernym of rel)
-            # - synonym/antonym: symmetric (use UNION)
-            # - meronym: rel -> seed (rel is part of seed)
-            # - holonym: rel -> seed (rel has seed as part, i.e., rel contains seed)
+            # Determine direction based on relation type.
+            # CompL-IT semantics: A lexinfo:hyponym B = "A is a hyponym of B"
+            #   (A is more specific, B is more general)
+            # - hyponym: ?senseRel lexinfo:hyponym ?seedSense
+            #     → senseRel is more specific than seed → hyponym of seed ✓
+            # - hypernym: ?seedSense lexinfo:hyponym ?senseRel
+            #     → seed is more specific than senseRel → senseRel is hypernym of seed ✓
+            # - meronym: ?senseRel lexinfo:partMeronym ?seedSense
+            #     → senseRel is a part of seed ✓
+            # - synonym/antonym: symmetric (UNION both directions)
             if rel_type == "synonym" or rel_type == "antonym":
                 # Symmetric - use both directions
                 slots["rel_triple"] = (
                     f"{{ ?seedSense {rel_pred} ?senseRel . }} UNION "
                     f"{{ ?senseRel {rel_pred} ?seedSense . }}"
                 )
-            elif rel_type in ("hypernym", "meronym", "holonym"):
-                # rel_to_seed direction
-                slots["rel_triple"] = f"?senseRel {rel_pred} ?seedSense ."
-            else:
-                # Default (hyponym): seed_to_rel direction
+            elif rel_type == "hypernym":
+                # seed is a hyponym of senseRel → senseRel is more general = hypernym
                 slots["rel_triple"] = f"?seedSense {rel_pred} ?senseRel ."
+            else:
+                # hyponym / meronym / holonym: rel_to_seed direction
+                slots["rel_triple"] = f"?senseRel {rel_pred} ?seedSense ."
 
             slots["seed_lemma"] = sparql_quote(seed)
+            pos = self._normalize_pos(pos) if pos else pos
             slots["seed_pos_filter"] = self._build_pos_filter(pos, "complit") if pos else ""
             slots["rel_extra"] = ""
 
@@ -697,12 +836,14 @@ Output your plan as JSON:"""
                 slots["def_filter"] = build_filter_for_var("?definition", ptype, ptext)
                 slots["lemma_filter"] = ""
 
+            pos = self._normalize_pos(pos) if pos else pos
             slots["pos_filter"] = self._build_pos_filter(pos, "complit") if pos else ""
 
         elif tool_name in ("find_liita_lemmas_by_pattern", "find_sicilian_lemmas_by_pattern", "find_parmigiano_lemmas_by_pattern"):
             ptype = params.get("pattern_type", "prefix")
             ptext = params.get("pattern_text", "")
-            pos = params.get("pos_filter")
+            pos_raw = params.get("pos_filter")
+            pos = self._normalize_pos(pos_raw) if pos_raw else None
 
             # Determine the variable to filter
             if tool_name == "find_liita_lemmas_by_pattern":
@@ -718,6 +859,14 @@ Output your plan as JSON:"""
             # Only add filter if pattern_text is non-empty
             slots["wr_filter"] = build_filter_for_var(wr_var, ptype, ptext) if ptext else ""
             slots["pos_clause"] = f"{lemma_var} lila:hasPOS lila:{pos} ." if pos else ""
+
+        elif tool_name == "count_senses":
+            words = params.get("words", [])
+            if len(words) == 1:
+                slots["seed_lemma"] = sparql_quote(words[0])
+            elif len(words) > 1:
+                regex_alt = "|".join(re.escape(w) for w in words)
+                slots["wr_regex_filter"] = f'FILTER(regex(str(?writtenRep), "^({regex_alt})$", "i")) .'
 
         elif tool_name == "get_emotions":
             emotions = params.get("emotions", [])
@@ -745,14 +894,35 @@ Output your plan as JSON:"""
     def _get_relation_predicate(self, rel_type: str) -> str:
         """Get the SPARQL predicate for a relation type."""
         mapping = {
+            # CompL-IT stores hyponymy as A lexinfo:hyponym B meaning
+            # "A is a hyponym of B" (A is more specific, B is more general).
+            # hyponym: ?senseRel lexinfo:hyponym ?seedSense  (senseRel more specific than seed)
+            # hypernym: ?seedSense lexinfo:hyponym ?senseRel (seed more specific than senseRel)
             "hyponym": "lexinfo:hyponym",
-            "hypernym": "lexinfo:hyponym",  # Same predicate, different direction
+            "hypernym": "lexinfo:hyponym",
             "synonym": "lexinfo:approximateSynonym",
             "antonym": "lexinfo:antonym",
             "meronym": "lexinfo:partMeronym",
             "holonym": "lexinfo:partHolonym",
         }
         return mapping.get(rel_type, "lexinfo:hyponym")
+
+    # Accepted LLM variants → canonical LiLA/CompL-IT POS string
+    _POS_NORMALIZE: Dict[str, str] = {
+        "noun": "noun", "nouns": "noun", "n": "noun",
+        "verb": "verb", "verbs": "verb", "v": "verb",
+        "adjective": "adjective", "adjectives": "adjective", "adj": "adjective",
+        "adverb": "adverb", "adverbs": "adverb", "adv": "adverb",
+        "pronoun": "pronoun", "pronouns": "pronoun", "pron": "pronoun",
+        "preposition": "preposition", "prep": "preposition",
+        "conjunction": "conjunction", "conj": "conjunction",
+        "interjection": "interjection", "interj": "interjection",
+        "numeral": "numeral", "num": "numeral",
+    }
+
+    def _normalize_pos(self, pos: str) -> str:
+        """Normalise LLM-supplied POS values to canonical lowercase LiLA form."""
+        return self._POS_NORMALIZE.get(pos.lower(), pos.lower())
 
     def _build_pos_filter(self, pos: str, source: str) -> str:
         """Build a POS filter clause."""
@@ -777,10 +947,28 @@ Output your plan as JSON:"""
 
         # Check for aggregation (use effective_aggregation which may come from tool steps)
         if effective_aggregation:
-            count_var = effective_aggregation.get("count_variable", "?lemma")
+            agg_fn = effective_aggregation.get("agg_function", "COUNT")
+            agg_var = effective_aggregation.get("agg_variable", "?lemma")
+            distinct = effective_aggregation.get("distinct", agg_fn == "COUNT")
+            xsd_cast = effective_aggregation.get("xsd_cast")
             group_vars = effective_aggregation.get("group_by", [])
 
-            aggregates["?count"] = f"COUNT(DISTINCT {count_var})"
+            # Build the inner expression
+            inner_var = agg_var
+            if xsd_cast:
+                inner_var = f"xsd:{xsd_cast}({agg_var})"
+            distinct_kw = "DISTINCT " if distinct else ""
+            agg_expr = f"{agg_fn}({distinct_kw}{inner_var})"
+
+            # Alias: ?avgPolarityValue for AVG on ?polarityValue, ?count for COUNT
+            if agg_fn == "AVG":
+                # Derive alias from variable name: ?polarityValue -> ?avgPolarityValue
+                var_name = agg_var.lstrip("?")
+                alias = f"?avg{var_name[0].upper()}{var_name[1:]}"
+            else:
+                alias = "?count"
+            aggregates[alias] = agg_expr
+
             select_vars = [v for v in group_vars if v in known_vars]
             group_by = list(select_vars)
         else:
@@ -789,14 +977,28 @@ Output your plan as JSON:"""
                 if var in known_vars:
                     select_vars.append(var)
 
-            # Add common useful vars if available
-            priority_vars = ["?itLemmaString", "?lemma", "?wr", "?liitaLemma"]
-            for var in priority_vars:
-                if var in known_vars and var not in select_vars:
-                    select_vars.insert(0, var)
+            # Add common useful vars only when the LLM didn't specify output_vars.
+            # If output_vars was given, trust it — don't silently inject extra columns
+            # (e.g., ?itLemmaString would break pure semantic-relation queries).
+            if not select_vars:
+                # ?wordRel must come before ?itLemmaString so positional variable
+                # mapping prefers the CompL-IT IRI (matches gold hypernymWord etc.)
+                priority_vars = ["?wordRel", "?itLemmaString", "?lemma", "?wr", "?liitaLemma"]
+                for var in priority_vars:
+                    if var in known_vars and var not in select_vars:
+                        select_vars.insert(0, var)
+            elif "?wr" in known_vars and ("?parWR" in known_vars or "?sicWR" in known_vars):
+                # Translation query: always prepend the Italian written rep so the
+                # evaluator can correctly pair (italianWord, dialectWord) tuples.
+                # Without ?wr, it maps gold's italianWord → parWR/sicWR (wrong language)
+                # and gets 0 true positives even when counts match exactly.
+                if "?wr" not in select_vars:
+                    select_vars.insert(0, "?wr")
 
-            # Add aggregates for multi-valued fields
-            if "?definition" in known_vars:
+            # Add definition aggregate only when explicitly requested.
+            # Unconditionally adding it converts simple SELECT queries into
+            # GROUP BY queries and creates columns absent from gold queries.
+            if "?definition" in known_vars and "?definition" in plan.output_vars:
                 aggregates["?definitionSample"] = "SAMPLE(?definition)"
             if "?sicWR" in known_vars and "?sicWR" not in select_vars:
                 aggregates["?sicilianoWRs"] = 'GROUP_CONCAT(DISTINCT ?sicWR; SEPARATOR=", ")'
