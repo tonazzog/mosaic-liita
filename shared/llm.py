@@ -266,7 +266,7 @@ class OpenAILLM(BaseLLM):
 # ============================================================================
 
 class GeminiLLM(BaseLLM):
-    """Google Gemini client"""
+    """Google Gemini client (uses google-genai SDK)"""
 
     DEFAULT_MODEL = "gemini-2.5-flash"
 
@@ -280,35 +280,15 @@ class GeminiLLM(BaseLLM):
         super().__init__(api_key, model or self.DEFAULT_MODEL, default_temperature, default_max_tokens)
 
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=api_key)
-            self.genai = genai
-            self._model = None  # Lazy initialization
+            from google import genai
+            self.client = genai.Client(api_key=api_key)
+            self.types = genai.types
         except ImportError:
-            raise ImportError("Please install google-generativeai: pip install google-generativeai")
+            raise ImportError("Please install google-genai: pip install google-genai")
 
     @property
     def provider_name(self) -> str:
         return "Google Gemini"
-
-    def _get_model(self, system: Optional[str] = None):
-        """Get or create the generative model with optional system instruction"""
-        config = {
-            "temperature": self.default_temperature,
-            "max_output_tokens": self.default_max_tokens,
-        }
-
-        if system:
-            return self.genai.GenerativeModel(
-                self.model,
-                generation_config=config,
-                system_instruction=system
-            )
-        else:
-            return self.genai.GenerativeModel(
-                self.model,
-                generation_config=config
-            )
 
     def complete(
         self,
@@ -318,19 +298,17 @@ class GeminiLLM(BaseLLM):
         max_tokens: Optional[int] = None,
         **kwargs
     ) -> str:
-        model = self._get_model(system)
+        config = self.types.GenerateContentConfig(
+            temperature=temperature if temperature is not None else self.default_temperature,
+            max_output_tokens=max_tokens if max_tokens is not None else self.default_max_tokens,
+            system_instruction=system,
+        )
 
-        # Override generation config if parameters provided
-        gen_config = {}
-        if temperature is not None:
-            gen_config["temperature"] = temperature
-        if max_tokens is not None:
-            gen_config["max_output_tokens"] = max_tokens
-
-        if gen_config:
-            response = model.generate_content(prompt, generation_config=gen_config)
-        else:
-            response = model.generate_content(prompt)
+        response = self.client.models.generate_content(
+            model=self.model,
+            contents=prompt,
+            config=config,
+        )
 
         return response.text.strip()
 
