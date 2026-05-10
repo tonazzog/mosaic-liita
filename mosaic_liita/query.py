@@ -213,6 +213,12 @@ def validate_queryspec(spec: QuerySpec, registry: "BlockRegistry") -> None:
             if v not in spec.select_vars:
                 raise QuerySpecError(f"GROUP BY var {v} must be in select_vars")
 
+        for v in spec.select_vars:
+            if v not in spec.group_by:
+                raise QuerySpecError(
+                    f"SELECT var {v} is not in GROUP BY (required when aggregates are present)"
+                )
+
     # 5) HAVING / ORDER BY format
     if spec.having is not None:
         if not spec.having.strip().upper().startswith("HAVING "):

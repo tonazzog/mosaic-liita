@@ -987,19 +987,21 @@ Output your plan as JSON:"""
                 for var in priority_vars:
                     if var in known_vars and var not in select_vars:
                         select_vars.insert(0, var)
-            elif "?wr" in known_vars and ("?parWR" in known_vars or "?sicWR" in known_vars):
-                # Translation query: always prepend the Italian written rep so the
-                # evaluator can correctly pair (italianWord, dialectWord) tuples.
-                # Without ?wr, it maps gold's italianWord → parWR/sicWR (wrong language)
-                # and gets 0 true positives even when counts match exactly.
-                if "?wr" not in select_vars:
-                    select_vars.insert(0, "?wr")
+            else:
+                # ?wr is the LiITA written rep variable, only available on direct LiITA
+                # paths. The CompLIT semantic-relation path exposes the same information
+                # as ?itLemmaString. Substitute so the LLM's intent is honoured even
+                # when it names the wrong variable.
+                if "?wr" in plan.output_vars and "?wr" not in known_vars and "?itLemmaString" in known_vars:
+                    if "?itLemmaString" not in select_vars:
+                        select_vars.insert(0, "?itLemmaString")
 
-            # Add definition aggregate only when explicitly requested.
-            # Unconditionally adding it converts simple SELECT queries into
-            # GROUP BY queries and creates columns absent from gold queries.
-            if "?definition" in known_vars and "?definition" in plan.output_vars:
-                aggregates["?definitionSample"] = "SAMPLE(?definition)"
+                if "?wr" in known_vars and ("?parWR" in known_vars or "?sicWR" in known_vars):
+                    # Translation query: always prepend the Italian written rep so the
+                    # evaluator can correctly pair (italianWord, dialectWord) tuples.
+                    if "?wr" not in select_vars:
+                        select_vars.insert(0, "?wr")
+
             if "?sicWR" in known_vars and "?sicWR" not in select_vars:
                 aggregates["?sicilianoWRs"] = 'GROUP_CONCAT(DISTINCT ?sicWR; SEPARATOR=", ")'
             if "?parWR" in known_vars and "?parWR" not in select_vars:
@@ -1008,6 +1010,19 @@ Output your plan as JSON:"""
                 aggregates["?polarityLabels"] = 'GROUP_CONCAT(DISTINCT ?polarityLabel; SEPARATOR=", ")'
             if "?emotionLabel" in known_vars:
                 aggregates["?emotions"] = 'GROUP_CONCAT(DISTINCT ?emotionLabel; SEPARATOR=", ")'
+                # Remove ?emotionLabel from plain SELECT — it is fully represented by
+                # the GROUP_CONCAT aggregate. Keeping it would force GROUP BY on emotion
+                # label instead of on the Italian word, collapsing rows the wrong way.
+                select_vars = [v for v in select_vars if v != "?emotionLabel"]
+
+            # Add SAMPLE(?definition) only when other aggregates already force GROUP BY.
+            # Without this guard, SAMPLE becomes the sole aggregate and triggers an
+            # unnecessary GROUP BY, adding a redundant ?definitionSample column.
+            # When GROUP BY is forced by other aggregates, SAMPLE collapses multiple
+            # definitions per group instead of exploding rows.
+            if "?definition" in known_vars and "?definition" in plan.output_vars and aggregates:
+                aggregates["?definitionSample"] = "SAMPLE(?definition)"
+                select_vars = [v for v in select_vars if v != "?definition"]
 
             # GROUP BY all non-aggregate select vars if we have aggregates
             if aggregates:

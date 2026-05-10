@@ -523,7 +523,11 @@ class Planner:
                     group_by.append("?itLemmaString")
 
             if "?definition" in known_vars:
-                if wants_complit_def:
+                wants_def_listing = wants_complit_def or contains_any(q, [
+                    "sense", "senses", "senso", "sensi",
+                    "meaning", "meanings", "significato", "significati",
+                ])
+                if wants_def_listing:
                     # Definitions are primary output - list all without grouping
                     select_vars.append("?definition")
                 else:
@@ -544,11 +548,11 @@ class Planner:
                 if "?parWR" in known_vars:
                     aggregates["?parmigianoWRs"] = 'GROUP_CONCAT(DISTINCT ?parWR; SEPARATOR=", ")'
 
-            if "?sicLemma" in known_vars:
+            if "?sicLemma" in known_vars and "?sicilianoWRs" not in aggregates:
                 select_vars += ["?sicLemma", "?sicWR"]
                 group_by += ["?sicLemma", "?sicWR"]
 
-            if "?parLemma" in known_vars:
+            if "?parLemma" in known_vars and "?parmigianoWRs" not in aggregates:
                 select_vars += ["?parLemma", "?parWR"]
                 group_by += ["?parLemma", "?parWR"]
 
@@ -560,6 +564,12 @@ class Planner:
 
             if aggregates:
                 group_by = [v for v in group_by if v in select_vars]
+                # All non-aggregate SELECT vars must be in GROUP BY (SPARQL validity)
+                gb_set = set(group_by)
+                for v in select_vars:
+                    if v not in gb_set:
+                        group_by.append(v)
+                        gb_set.add(v)
                 group_by = list(dict.fromkeys(group_by))
 
         return QuerySpec(

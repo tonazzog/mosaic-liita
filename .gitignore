@@ -41,5 +41,8 @@ CLAUDE.md
 .DS_Store
 Thumbs.db
 
+# Jupyter
+.ipynb_checkpoints/
+
 # Project specific
 *.log

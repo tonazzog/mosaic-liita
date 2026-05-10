@@ -181,13 +181,10 @@ def execute_sparql(sparql: str, limit: int = 20) -> str:
         if "LIMIT" not in sparql.upper():
             sparql = sparql.rstrip().rstrip(";") + f"\nLIMIT {limit}"
 
-        response = requests.post(
+        response = requests.get(
             LIITA_ENDPOINT,
-            data={"query": sparql},
-            headers={
-                "Accept": "application/sparql-results+json",
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
+            params={"query": sparql, "format": "application/sparql-results+json"},
+            headers={"Accept": "application/sparql-results+json"},
             timeout=DEFAULT_TIMEOUT,
         )
 
