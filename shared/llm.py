@@ -18,7 +18,7 @@ Usage:
     client = create_llm_client(
         provider="anthropic",
         api_key="your-api-key",
-        model="claude-sonnet-4-20250514"
+        model="claude-haiku-4-5-20251001"
     )
 
     # Use the client
@@ -155,7 +155,7 @@ class MistralLLM(BaseLLM):
 class AnthropicLLM(BaseLLM):
     """Anthropic Claude client"""
 
-    DEFAULT_MODEL = "claude-sonnet-4-20250514"
+    DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 
     def __init__(
         self,
@@ -213,7 +213,7 @@ class AnthropicLLM(BaseLLM):
 class OpenAILLM(BaseLLM):
     """OpenAI GPT client"""
 
-    DEFAULT_MODEL = "gpt-4o"
+    DEFAULT_MODEL = "gpt-4.1-mini"
 
     def __init__(
         self,
@@ -268,7 +268,7 @@ class OpenAILLM(BaseLLM):
 class GeminiLLM(BaseLLM):
     """Google Gemini client"""
 
-    DEFAULT_MODEL = "gemini-1.5-pro"
+    DEFAULT_MODEL = "gemini-2.5-flash"
 
     def __init__(
         self,
@@ -434,7 +434,7 @@ def create_llm_client(
         client = create_llm_client(
             provider="anthropic",
             api_key="sk-...",
-            model="claude-sonnet-4-20250514"
+            model="claude-haiku-4-5-20251001"
         )
         response = client.complete("Hello!", system="You are a helpful assistant.")
     """

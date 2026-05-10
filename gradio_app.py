@@ -45,9 +45,9 @@ LLM_PROVIDERS = ["mistral", "anthropic", "openai", "gemini", "ollama"]
 
 DEFAULT_MODELS = {
     "mistral": "mistral-large-latest",
-    "anthropic": "claude-sonnet-4-20250514",
-    "openai": "gpt-4o",
-    "gemini": "gemini-1.5-pro",
+    "anthropic": "claude-haiku-4-5-20251001",
+    "openai": "gpt-4.1-mini",
+    "gemini": "gemini-2.5-flash",
     "ollama": "llama3.1",
 }
 
