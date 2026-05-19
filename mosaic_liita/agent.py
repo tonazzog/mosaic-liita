@@ -830,10 +830,10 @@ Output your plan as JSON:"""
             pos = params.get("pos_filter")
 
             if apply_to == "lemma":
-                slots["lemma_filter"] = build_filter_for_var("?itLemmaString", ptype, ptext)
+                slots["lemma_filter"] = build_filter_for_var("?itLemmaString", ptype, ptext, use_regex=False)
                 slots["def_filter"] = ""
             else:
-                slots["def_filter"] = build_filter_for_var("?definition", ptype, ptext)
+                slots["def_filter"] = build_filter_for_var("?definition", ptype, ptext, use_regex=False)
                 slots["lemma_filter"] = ""
 
             pos = self._normalize_pos(pos) if pos else pos

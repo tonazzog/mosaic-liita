@@ -150,28 +150,46 @@ def extract_pattern_request(nl: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def build_filter_for_var(var: str, mode: str, text: str) -> str:
+def build_filter_for_var(var: str, mode: str, text: str, use_regex: bool = True) -> str:
     """
     Build a SPARQL FILTER clause for pattern matching.
 
     Args:
         var: SPARQL variable name (e.g., "?wr")
-        mode: "prefix", "suffix", or "contains"
+        mode: "prefix", "suffix", "contains", or "exact"
         text: The pattern text to match
+        use_regex: If True (default), emit REGEX() — required by the LiITA endpoint.
+                   If False, emit STRSTARTS/STRENDS/CONTAINS — required by CompL-IT.
 
     Returns:
         A SPARQL FILTER clause string
     """
-    safe = text.replace("\\", "\\\\").replace('"', '\\"')
+    safe_str = text.replace("\\", "\\\\").replace('"', '\\"')
 
     if mode == "exact":
-        return f'FILTER(STR({var}) = "{safe}") .'
+        return f'FILTER(STR({var}) = "{safe_str}") .'
+
+    if not use_regex:
+        if mode == "prefix":
+            return f'FILTER(STRSTARTS(STR({var}), "{safe_str}")) .'
+        if mode == "contains":
+            return f'FILTER(CONTAINS(LCASE(STR({var})), LCASE("{safe_str}"))) .'
+        if mode == "suffix":
+            return f'FILTER(STRENDS(STR({var}), "{safe_str}")) .'
+        return ""
+
+    # REGEX path: regex-escape the raw text first, then SPARQL-string-escape.
+    # Two separate passes because \\ in SPARQL means literal \, which regex then reads as \<char>.
+    _re_meta = set(r'\.^$*+?{}[]|()')
+    _re_pat = "".join(f"\\{c}" if c in _re_meta else c for c in text)
+    safe_re = _re_pat.replace("\\", "\\\\").replace('"', '\\"')
+
     if mode == "prefix":
-        return f'FILTER(STRSTARTS(STR({var}), "{safe}")) .'
+        return f'FILTER(REGEX(STR({var}), "^{safe_re}")) .'
     if mode == "contains":
-        return f'FILTER(CONTAINS(LCASE(STR({var})), LCASE("{safe}"))) .'
+        return f'FILTER(REGEX(STR({var}), "{safe_re}", "i")) .'
     if mode == "suffix":
-        return f'FILTER(STRENDS(STR({var}), "{safe}")) .'
+        return f'FILTER(REGEX(STR({var}), "{safe_re}$")) .'
     return ""
 
 

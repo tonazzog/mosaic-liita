@@ -255,11 +255,11 @@ class Planner:
                     "menziona", "includono", "riferimento",
                 ])
                 if def_content_cues:
-                    def_filter = build_filter_for_var("?definition", pat["mode"], pat["text"])
+                    def_filter = build_filter_for_var("?definition", pat["mode"], pat["text"], use_regex=False)
                 elif lemma_cues:
-                    lemma_filter = build_filter_for_var("?itLemmaString", pat["mode"], pat["text"])
+                    lemma_filter = build_filter_for_var("?itLemmaString", pat["mode"], pat["text"], use_regex=False)
                 else:
-                    def_filter = build_filter_for_var("?definition", pat["mode"], pat["text"])
+                    def_filter = build_filter_for_var("?definition", pat["mode"], pat["text"], use_regex=False)
 
             bid = "COMPLIT_DEF_FILTER_BY_PATTERN"
             blocks.append(BlockCall(
@@ -608,32 +608,21 @@ class Planner:
         for s in quoted:
             if s.strip():
                 terms.append(s.strip().lower())
-        # Scan for all known emotion keywords (EMOTION_MAP keys cover both
-        # Italian and English names).  Also include common paraphrases.
-        _EMOTION_KEYWORDS = list(EMOTION_MAP.keys()) + [
-            "felicità", "felicita", "happiness",
-        ]
+        _EMOTION_KEYWORDS = list(EMOTION_MAP.keys())
         for k in _EMOTION_KEYWORDS:
             if re.search(rf"\b{re.escape(k)}\b", q):
                 terms.append(k)
         return list(dict.fromkeys(terms))
 
     def _make_emotion_filter_clause(self, emotion_terms: List[str]) -> str:
-        """Build SPARQL filter clause for emotions."""
+        """Build SPARQL filter clause for emotions using IRI VALUES (never string functions)."""
+        seen = set()
         iris = []
-        label_terms = []
         for t in emotion_terms:
-            t_norm = t.lower()
-            if t_norm in EMOTION_MAP:
-                iris.append(EMOTION_MAP[t_norm])
-            else:
-                label_terms.append(t_norm)
-
-        if iris and not label_terms:
-            values = " ".join(iris)
-            return f"VALUES ?emotion {{ {values} }}"
-
-        if emotion_terms:
-            items = ", ".join(sparql_quote(t.replace("'", "'")) for t in emotion_terms)
-            return f"FILTER(LCASE(STR(?emotionLabel)) IN ({items}))"
+            iri = EMOTION_MAP.get(t.lower())
+            if iri and iri not in seen:
+                iris.append(iri)
+                seen.add(iri)
+        if iris:
+            return f"VALUES ?emotion {{ {' '.join(iris)} }}"
         return ""

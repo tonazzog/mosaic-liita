@@ -62,6 +62,7 @@ EMOTION_MAP: Dict[str, str] = {
     "amore": "elita:Amore",
     # English aliases
     "joy": "elita:Gioia",
+    "happiness": "elita:Gioia",
     "sadness": "elita:Tristezza",
     "fear": "elita:Paura",
     "anger": "elita:Rabbia",
@@ -70,6 +71,9 @@ EMOTION_MAP: Dict[str, str] = {
     "anticipation": "elita:Aspettativa",
     "trust": "elita:Fiducia",
     "love": "elita:Amore",
+    # Italian paraphrases not covered above
+    "felicità": "elita:Gioia",
+    "felicita": "elita:Gioia",
 }
 
 # ---------------------------

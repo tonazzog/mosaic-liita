@@ -22,6 +22,7 @@ import requests
 
 from mosaic_liita import Assembler, Planner, make_registry, BlockRegistry, QueryAgent
 from shared.llm import create_llm_client
+from shared.sparql import fetch_sparql
 
 
 # ============================================================================
@@ -30,8 +31,6 @@ from shared.llm import create_llm_client
 
 DATA_DIR = Path(__file__).parent / "data"
 ONTOLOGY_PATH = DATA_DIR / "ontology_filtered.json"
-LIITA_ENDPOINT = "https://liita.it/sparql"
-DEFAULT_TIMEOUT = 30
 
 EXAMPLE_QUERIES = [
     "Find CompL-IT definitions starting with 'uccello' and show Parmigiano and Sicilian translation.",
@@ -173,25 +172,12 @@ def format_agent_plan(agent_plan) -> str:
 # ============================================================================
 
 def execute_sparql(sparql: str, limit: int = 20) -> str:
-    """Execute a SPARQL query against the LiITA endpoint."""
+    """Execute a SPARQL query and format results as markdown for the Gradio UI."""
     if not sparql.strip():
         return "Please enter a SPARQL query"
 
     try:
-        if "LIMIT" not in sparql.upper():
-            sparql = sparql.rstrip().rstrip(";") + f"\nLIMIT {limit}"
-
-        response = requests.get(
-            LIITA_ENDPOINT,
-            params={"query": sparql, "format": "application/sparql-results+json"},
-            headers={"Accept": "application/sparql-results+json"},
-            timeout=DEFAULT_TIMEOUT,
-        )
-
-        if response.status_code != 200:
-            return f"**Error:** HTTP {response.status_code}\n\n```\n{response.text}\n```"
-
-        data = response.json()
+        data = fetch_sparql(sparql, limit=limit)
         variables = data.get("head", {}).get("vars", [])
         bindings = data.get("results", {}).get("bindings", [])
 

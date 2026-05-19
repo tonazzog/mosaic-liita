@@ -279,8 +279,8 @@ def make_registry() -> BlockRegistry:
         where=[
             "?elitaLemma ontolex:canonicalForm ?liitaLemma .",
             "?elitaLemma elita:HasEmotion ?emotion .",
-            "?emotion rdfs:label ?emotionLabel .",
             "{emotion_filter_clause}",
+            "?emotion rdfs:label ?emotionLabel .",
         ],
     ))
 
