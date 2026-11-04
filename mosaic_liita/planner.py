@@ -516,7 +516,8 @@ class Planner:
                 select_vars.append("?wordRel")
                 group_by.append("?wordRel")
 
-            if "?itLemmaString" in known_vars and "?wordRel" not in select_vars:
+            if "?itLemmaString" in known_vars:
+                # Kept after ?wordRel so the IRI stays the primary output
                 select_vars.append("?itLemmaString")
                 # Don't group by word when definitions are primary output
                 if not (wants_complit_def and "?definition" in known_vars):
@@ -580,6 +581,8 @@ class Planner:
             having=having,
             order_by=order_by,
             limit=None if (wants_count or is_sense_count) else 200,
+            # Symmetric semrel UNIONs match each pair twice
+            distinct="?wordRel" in select_vars and not aggregates,
         )
 
     def _wants_sense_count(self, q: str, quoted: List[str]) -> bool:

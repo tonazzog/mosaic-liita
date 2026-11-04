@@ -55,6 +55,7 @@ class QueryPlan:
     having: Optional[str] = None
     order_by: Optional[str] = None
     limit: Optional[int] = None
+    distinct: bool = False
 
 
 @dataclass
@@ -79,6 +80,7 @@ class QuerySpec:
     having: Optional[str] = None
     order_by: Optional[str] = None
     limit: Optional[int] = 200
+    distinct: bool = False
 
     # Metadata
     intent: Optional[str] = None
@@ -107,6 +109,7 @@ class QuerySpec:
             having=self.having,
             order_by=self.order_by,
             limit=self.limit,
+            distinct=self.distinct,
         )
 
     @staticmethod
@@ -124,6 +127,7 @@ class QuerySpec:
             having=plan.having,
             order_by=plan.order_by,
             limit=plan.limit,
+            distinct=plan.distinct,
         )
 
 

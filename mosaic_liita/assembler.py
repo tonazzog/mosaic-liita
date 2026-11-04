@@ -63,7 +63,7 @@ class Assembler:
         for alias, expr in plan.aggregates.items():
             select_parts.append(f"({expr} AS {alias})")
 
-        select_clause = "SELECT " + " ".join(select_parts)
+        select_clause = ("SELECT DISTINCT " if plan.distinct else "SELECT ") + " ".join(select_parts)
 
         # Build GROUP BY clause
         group_by_clause = ""

@@ -259,13 +259,14 @@ def make_registry() -> BlockRegistry:
         id="SENTIX_POLARITY",
         requires={"?liitaLemma"},
         provides={"?polarityLabel", "?polarityValue"},
-        prefixes={"marl", "ontolex", "rdfs"},
+        prefixes={"marl", "ontolex"},
         where=[
             "?sentixLemma ontolex:canonicalForm ?liitaLemma .",
             "OPTIONAL {{ ?sentixLemma marl:hasPolarityValue ?polarityValue . }}",
             "OPTIONAL {{",
             "  ?sentixLemma marl:hasPolarity ?polarity .",
-            "  ?polarity rdfs:label ?polarityLabel .",
+            # Polarity nodes (marl:Positive etc.) have no rdfs:label on LiITA
+            "  BIND(STRAFTER(STR(?polarity), \"#\") AS ?polarityLabel)",
             "}}",
         ],
     ))

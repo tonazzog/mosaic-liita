@@ -384,6 +384,7 @@ class QueryAgent:
         custom_filters: List[str] = []
         filter_requires: Set[str] = set()  # Track variables used in filters
         captured_aggregation: Optional[Dict[str, Any]] = None  # Aggregation from tool steps
+        count_senses_words: Optional[List[str]] = None  # Set when count_senses is used
 
         for step in plan.steps:
             tool_def = AGENT_TOOLS.get(step.tool)
@@ -461,6 +462,9 @@ class QueryAgent:
 
             blocks.append(BlockCall(block_id=block_id, slots=slots))
 
+            if step.tool == "count_senses":
+                count_senses_words = step.params.get("words", [])
+
             # Update known vars
             if block_id in self.registry.blocks:
                 known_vars |= self.registry.get(block_id).provides
@@ -481,6 +485,17 @@ class QueryAgent:
 
         # Use captured aggregation from tool steps if plan.aggregation is not set
         effective_aggregation = plan.aggregation or captured_aggregation
+
+        # The count_senses block only lists senses: make sure they are counted,
+        # even when the LLM adds no aggregation or counts an unbound variable
+        if count_senses_words is not None:
+            effective_aggregation = dict(effective_aggregation or {})
+            counted = effective_aggregation.get("agg_variable") or effective_aggregation.get("count_variable")
+            if counted not in known_vars:
+                effective_aggregation["agg_function"] = "COUNT"
+                effective_aggregation["agg_variable"] = "?sense"
+            if len(count_senses_words) > 1 and not effective_aggregation.get("group_by"):
+                effective_aggregation["group_by"] = ["?writtenRep"]
 
         # Build output specification
         select_vars, aggregates, group_by = self._build_output_spec(plan, known_vars, effective_aggregation)
@@ -948,7 +963,12 @@ Output your plan as JSON:"""
         # Check for aggregation (use effective_aggregation which may come from tool steps)
         if effective_aggregation:
             agg_fn = effective_aggregation.get("agg_function", "COUNT")
-            agg_var = effective_aggregation.get("agg_variable", "?lemma")
+            # Plan-level aggregation from the LLM may use count_results' key name
+            agg_var = (
+                effective_aggregation.get("agg_variable")
+                or effective_aggregation.get("count_variable")
+                or "?lemma"
+            )
             distinct = effective_aggregation.get("distinct", agg_fn == "COUNT")
             xsd_cast = effective_aggregation.get("xsd_cast")
             group_vars = effective_aggregation.get("group_by", [])
