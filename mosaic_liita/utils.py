@@ -83,8 +83,19 @@ def extract_pattern_request(nl: str) -> Optional[Dict[str, Any]]:
 
     Returns:
         dict with "mode" ("prefix"|"suffix"|"contains") and "text",
-        or None if not found.
+        or None if not found. Affixes written in linguistic notation
+        ("dis-", "-zione") are returned without the hyphen.
     """
+    pat = _extract_pattern_request_raw(nl)
+    if pat:
+        text = pat["text"].strip("-–‑ ")
+        if not text:
+            return None
+        pat["text"] = text
+    return pat
+
+
+def _extract_pattern_request_raw(nl: str) -> Optional[Dict[str, Any]]:
     q = re.sub(r"\s+", " ", nl.strip().lower())
 
     # 1) quoted text after pattern keywords
@@ -164,6 +175,9 @@ def build_filter_for_var(var: str, mode: str, text: str, use_regex: bool = True)
     Returns:
         A SPARQL FILTER clause string
     """
+    if mode in ("prefix", "suffix"):
+        # Affixes in linguistic notation ("dis-", "-zione"): match without the hyphen
+        text = text.strip().strip("-–‑").strip() or text
     safe_str = text.replace("\\", "\\\\").replace('"', '\\"')
 
     if mode == "exact":
