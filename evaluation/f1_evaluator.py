@@ -1,20 +1,38 @@
-"""F1 Score on Answers evaluator for MoSAIC-LiITA NL2SPARQL system.
+"""Unified F1-on-answers evaluator shared by PRISMA, MoSAIC and NL2SPARQL.
 
 Executes both gold and predicted SPARQL queries against the LiITA endpoint
 and compares their result sets using F1 score (precision/recall on answer tuples).
 
-Ported from prisma-per-liita/evaluation/f1_evaluator.py — logic unchanged.
-The only modifications are:
-  - ANSWER_VARIABLE_CATEGORIES extended with MoSAIC-specific variables
+One identical copy of this file is used by all three systems (built 2026-11-03
+from mosaic-liita/evaluation/f1_evaluator.py), so that their scores are comparable:
+  - ANSWER_VARIABLE_CATEGORIES is the union of the three former tables
+    (on conflicts the MoSAIC/PRISMA category is kept: polarity -> uris,
+    emotionLabel / lemma / lexicalEntry -> secondary)
+  - variable mapping: name / category / similarity phases as in PRISMA and MoSAIC,
+    plus a final value-based phase: still-unmatched gold primary variables are
+    mapped, in SELECT order, to remaining predicted variables whose values are
+    literals (not IRIs), whatever their name
+  - queries go through GET, falling back to POST when GET fails or the query is
+    too long for a URL (the LiITA proxy rejects some POSTed GROUP_CONCAT queries)
+  - variable names missing from the table that end in Wr / Word / WrittenRep are
+    classified as primary (written forms are user-facing answers)
+  - averages (aggregates named avg* / average* / mean*) match within 1% relative tolerance
+  - F1Evaluator accepts both strip_limit (PRISMA/MoSAIC) and strip_predicted_limit
+    (NL2SPARQL) for the same option
+  - IRI/literal equivalents: when a gold primary answer is an IRI, the gold may name
+    a literal column with the same answer in answer_variables["equivalents"]
+    ({iri_var: literal_var}, e.g. a CompL-it Word IRI and its written form). If the
+    predicted column mapped to iri_var holds literals, it is compared with
+    literal_var instead (gold rows without a literal are then left out), so
+    systems are not penalised for returning words instead of IRIs or vice versa
 
 Usage:
-    from evaluation.f1_evaluator import F1Evaluator
-
     evaluator = F1Evaluator()
     result = evaluator.evaluate_single(gold_sparql, predicted_sparql, answer_vars)
     print(f"F1: {result.f1:.3f}")
 """
 
+import math
 import re
 import warnings
 from collections import Counter
@@ -27,6 +45,11 @@ from typing import Optional
 # ---------------------------------------------------------------------------
 
 LIITA_ENDPOINT = "https://liita.it/sparql"
+
+# Relative tolerance for averages (gold aggregates named avg*): a slightly
+# different lemma set should not turn a near-identical mean into a miss.
+# Counts and other aggregates still require an exact match.
+AVG_REL_TOLERANCE = 0.01
 
 ANSWER_VARIABLE_CATEGORIES = {
     "primary": [
@@ -44,6 +67,7 @@ ANSWER_VARIABLE_CATEGORIES = {
         "parWR",              # MoSAIC Parmigiano written rep (de-aggregated)
         "definitionSample",   # MoSAIC SAMPLE(definition) — if not de-aggregated
         "wordRel",            # MoSAIC related word (CompL-IT lexical entry IRI)
+        "writtenRep",         # MoSAIC CompL-IT written rep (sense-count blocks)
     ],
     "secondary": [
         # --- Gold variables ---
@@ -81,6 +105,18 @@ ANSWER_VARIABLE_CATEGORIES = {
         "emotionLexEntry",
     ],
 }
+
+# Variables added from the PRISMA and NL2SPARQL tables (unified evaluator)
+_UNION_ADDITIONS = {
+    'primary': ['word', 'relatedWord', 'italianWR', 'wr', 'parmigianoWR', 'sicilianWR', 'definition', 'polarityLabel', 'relationType', 'example', 'wordA', 'wordB', 'italianWord', 'sicilianWord', 'parmigianoWord', 'dialectWord', 'hypernymWord', 'hyponymWord', 'meronymWord', 'synonymWord', 'antonymWord', 'translationWord', 'itLemmaString', 'sicWR', 'parWR', 'definitionSample', 'wordRel', 'writtenRep', 'inflectedForm', 'partWord', 'senseDefinition', 'senseLabel', 'wholeWord'],
+    'secondary': ['lemma', 'sense', 'liitaLemma', 'sentixLemma', 'elitaLemma', 'complitWord', 'parmigianoLemma', 'sicilianLemma', 'pos', 'gender', 'senseA', 'senseB', 'posA', 'posB', 'leParmigianoIta', 'leParmigianoSic', 'leSicilianIta', 'leSicilianSic', 'lexEntryLabel', 'lexicalEntry', 'italianLemma', 'emotionLabel', 'sicLemma', 'parLemma', 'senseRel', 'dialectLemma', 'dialectName', 'expressionLabel', 'formType', 'grammaticalInfo', 'hypSense', 'italianGender', 'label', 'morphPattern', 'relatedSense', 'senseLexicon', 'sensePOS', 'sicilianGender'],
+    'aggregates': ['count', 'aggregated', 'wordCount', 'sumValue', 'avgValue', 'minValue', 'maxValue', 'avgPolarityValue', 'avgForms', 'sicilianoWRs', 'parmigianoWRs', 'polarityLabels', 'polarityValues', 'emotions', 'variantCount', 'entries', 'genders', 'lemmaCount', 'linkCount', 'score', 'senseCount'],
+    'numeric': ['polarityValue', 'value', 'length', 'len'],
+    'uris': ['emotion', 'polarity', 'graph', 'form', 'emotionLexEntry', 'cf', 'dialectForm', 'dialectLemmaBank', 'dialectLexEntry', 'emotionResource', 'g', 'italianLexEntry', 'italianLexicalEntry', 'lemmaResource', 'o', 'p', 'parmigianoForm', 'parmigianoLexEntry', 'polarityLexEntry', 's', 'senseMeronym', 'sicilianForm', 'sicilianLexEntry', 'translationEntry', 'wType', 'wordMeronym'],
+}
+for _cat, _names in _UNION_ADDITIONS.items():
+    _known = ANSWER_VARIABLE_CATEGORIES.setdefault(_cat, [])
+    _known.extend(n for n in _names if n not in _known)
 
 
 # ---------------------------------------------------------------------------
@@ -140,13 +176,35 @@ def strip_limit_offset(sparql: str) -> str:
     return sparql.strip()
 
 
+WRITTEN_FORM_SUFFIXES = ("wr", "word", "writtenrep")
+
+MAX_GET_QUERY_CHARS = 6000  # longer queries go straight to POST (URL length limits)
+
+
 def execute_query_full(
     sparql: str,
     endpoint: str = LIITA_ENDPOINT,
     timeout: int = 60,
     max_results: int = 10000,
 ) -> QueryExecutionResult:
-    """Execute a SPARQL query and return the full result set.
+    """Execute a SPARQL query: GET first, POST as fallback (or POST only for long queries)."""
+    methods = ["POST"] if len(sparql) > MAX_GET_QUERY_CHARS else ["GET", "POST"]
+    result = None
+    for method in methods:
+        result = _execute_query_once(sparql, endpoint, timeout, max_results, method)
+        if result.success:
+            return result
+    return result
+
+
+def _execute_query_once(
+    sparql: str,
+    endpoint: str = LIITA_ENDPOINT,
+    timeout: int = 60,
+    max_results: int = 10000,
+    method: str = "GET",
+) -> QueryExecutionResult:
+    """Execute a SPARQL query once with the given HTTP method and return the full result set.
 
     Args:
         sparql: SPARQL query string
@@ -158,7 +216,7 @@ def execute_query_full(
         QueryExecutionResult with full result set
     """
     try:
-        from SPARQLWrapper import SPARQLWrapper, JSON, POST, URLENCODED
+        from SPARQLWrapper import SPARQLWrapper, JSON, GET, POST, URLENCODED
     except ImportError:
         return QueryExecutionResult(
             success=False, results=[], result_count=0, variables=[],
@@ -170,8 +228,11 @@ def execute_query_full(
         client.setQuery(sparql)
         client.setReturnFormat(JSON)
         client.setTimeout(timeout)
-        client.setMethod(POST)
-        client.setRequestMethod(URLENCODED)
+        if method == "POST":
+            client.setMethod(POST)
+            client.setRequestMethod(URLENCODED)
+        else:
+            client.setMethod(GET)
         client.addCustomHttpHeader("Accept", "application/sparql-results+json")
 
         with warnings.catch_warnings():
@@ -289,7 +350,7 @@ def _parse_select_variables(sparql: str) -> list[str]:
     # Track inner aggregate variables to exclude
     aggregate_inner = set()
     for pattern in [
-        r'(?:COUNT|SUM|AVG|MIN|MAX)\s*\(\s*\?(\w+)',
+        r'(?:COUNT|SUM|AVG|MIN|MAX)\s*\(\s*(?:DISTINCT\s+)?\?(\w+)',
         r'\(\s*[^)]*\?(\w+)[^)]*\s+AS\s+',
     ]:
         aggregate_inner.update(re.findall(pattern, select_clause, re.IGNORECASE))
@@ -321,12 +382,17 @@ def _classify_variable(var_name: str) -> str:
     for category, names in ANSWER_VARIABLE_CATEGORIES.items():
         if var_name in names:
             return category
+    # Unified evaluator: names not in the table that denote a written form
+    # (e.g. ?partWr, ?floreWord, ?lemmaWrittenRep) are user-facing answers
+    if var_name.lower().endswith(WRITTEN_FORM_SUFFIXES):
+        return "primary"
     return "unknown"
 
 
 def build_variable_mapping(
     gold_answer_vars: dict,
     predicted_sparql: str,
+    predicted_results: Optional[list[dict]] = None,
 ) -> dict[str, str]:
     """Map gold answer variable names to predicted variable names.
 
@@ -496,7 +562,45 @@ def build_variable_mapping(
             used_predicted.add(best_match)
             available_pred.remove(best_match)
 
+    # Phase 4 (unified evaluator): value-based fallback. Names are not reliable
+    # across systems (e.g. ?lemma holds a written form in some queries and a
+    # lemma IRI in others), so still-unmatched gold primary variables are mapped,
+    # in SELECT order, to remaining predicted variables whose values are literals.
+    if predicted_results:
+        unmatched_primary = [v for v in gold_answer_vars.get("primary", []) if v not in mapping]
+        literal_pred = [
+            v for v in predicted_vars
+            if v not in used_predicted and _is_literal_column(predicted_results, v)
+        ]
+        for gold_var, pred_var in zip(unmatched_primary, literal_pred):
+            mapping[gold_var] = pred_var
+            used_predicted.add(pred_var)
+
     return mapping
+
+
+def _column_kind(rows: list[dict], var: str, sample: int = 50) -> Optional[str]:
+    """'iri' if the bound values of var (in a sample of rows) are all IRIs, 'literal' otherwise, None if unbound."""
+    values = [r[var] for r in rows[:sample] if r.get(var)]
+    if not values:
+        return None
+    return "iri" if all(v.startswith(("http://", "https://", "urn:", "_:")) for v in values) else "literal"
+
+
+def _is_literal_column(rows: list[dict], var: str, sample: int = 50) -> bool:
+    """True if the bound values of var (in a sample of rows) are non-IRI, non-numeric literals."""
+    values = [r[var] for r in rows[:sample] if r.get(var)]
+    if not values:
+        return False
+    for v in values:
+        if v.startswith(("http://", "https://", "urn:", "_:")):
+            return False
+        try:
+            float(v)
+            return False
+        except ValueError:
+            pass
+    return True
 
 
 def compute_f1(
@@ -524,11 +628,22 @@ def compute_f1(
     tuple_vars = answer_vars.get("primary", [])
     aggregate_vars = answer_vars.get("aggregates", [])
 
+    # IRI/literal equivalents: compare a literal prediction with the gold's literal column
+    gold_cols = list(tuple_vars)
+    required_gold_cols = []
+    for k, var in enumerate(tuple_vars):
+        alt = answer_vars.get("equivalents", {}).get(var)
+        if alt and _column_kind(predicted_results, variable_mapping.get(var, var)) == "literal":
+            gold_cols[k] = alt
+            required_gold_cols.append(alt)
+    if required_gold_cols:
+        gold_results = [r for r in gold_results if all(r.get(c) for c in required_gold_cols)]
+
     def extract_tuple(row: dict, var_list: list[str], var_map: dict, is_gold: bool) -> tuple:
         values = []
-        for var in var_list:
+        for k, var in enumerate(var_list):
             if is_gold:
-                raw = row.get(var, "")
+                raw = row.get(gold_cols[k], "")
             else:
                 mapped = var_map.get(var, var)
                 raw = row.get(mapped, "")
@@ -577,6 +692,11 @@ def compute_f1(
             pred_val = normalize_value(pred_row.get(pred_mapped, ""), is_numeric=True)
 
             is_match = gold_val == pred_val
+            if not is_match and agg_var.lower().startswith(("avg", "average", "mean")):
+                try:
+                    is_match = math.isclose(float(gold_val), float(pred_val), rel_tol=AVG_REL_TOLERANCE)
+                except ValueError:
+                    pass
             aggregate_details[agg_var] = {
                 "gold": gold_val,
                 "predicted": pred_val,
@@ -635,7 +755,10 @@ class F1Evaluator:
         max_results: int = 10000,
         cache_gold_results: bool = True,
         strip_limit: bool = True,
+        strip_predicted_limit: Optional[bool] = None,  # NL2SPARQL's name for strip_limit
     ):
+        if strip_predicted_limit is not None:
+            strip_limit = strip_predicted_limit
         self.endpoint = endpoint
         self.timeout = timeout
         self.max_results = max_results
@@ -702,7 +825,7 @@ class F1Evaluator:
                 gold_count=0, predicted_count=0, true_positives=0,
             )
 
-        var_mapping = build_variable_mapping(answer_variables, predicted_sparql)
+        var_mapping = build_variable_mapping(answer_variables, predicted_sparql, pred_exec.results)
 
         numeric_vars = set(answer_variables.get("numeric", []))
         numeric_vars.update(answer_variables.get("aggregates", []))
