@@ -394,7 +394,8 @@ class Planner:
                     provides={"?liitaLemma", "?itLemmaString"},
                     prefixes={"lila", "ontolex"},
                     where=[
-                        "?liitaLemma a lila:Lemma .",
+                        "VALUES ?liitaLemmaType {{ lila:Lemma lila:Hypolemma }}",
+                        "?liitaLemma a ?liitaLemmaType .",
                         "?liitaLemma ontolex:writtenRep ?itLemmaString .",
                         f'FILTER(str(?itLemmaString) = {sparql_quote(word)}) .',
                     ],
@@ -410,7 +411,10 @@ class Planner:
                     requires=set(),
                     provides={"?liitaLemma"},
                     prefixes={"lila"},
-                    where=["?liitaLemma a lila:Lemma ."],
+                    where=[
+                        "VALUES ?liitaLemmaType {{ lila:Lemma lila:Hypolemma }}",
+                        "?liitaLemma a ?liitaLemmaType .",
+                    ],
                 )
                 if b.id not in self.R.blocks:
                     self.R.blocks[b.id] = b

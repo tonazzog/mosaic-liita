@@ -225,6 +225,21 @@ AGENT_TOOLS: Dict[str, Dict[str, Any]] = {
         "requires": [],
     },
 
+    "average_count_per_item": {
+        "description": (
+            "Average of a per-item count: first count count_variable for each item_variable, "
+            "then average those counts. Use for 'on average, how many X does each Y have', e.g. "
+            "'average number of written forms per verb lemma' → count_variable='?wr', item_variable='?lemma'."
+        ),
+        "type": "aggregation",
+        "parameters": {
+            "count_variable": {"type": "string", "description": "What is counted for each item (e.g., ?wr)", "required": True},
+            "item_variable": {"type": "string", "description": "The item the count is computed for (e.g., ?lemma)", "required": True},
+        },
+        "provides": ["?avgCount"],
+        "requires": [],
+    },
+
     "count_results": {
         "description": (
             "Count the results instead of listing them. Use for 'how many' queries. "
@@ -244,6 +259,31 @@ AGENT_TOOLS: Dict[str, Dict[str, Any]] = {
         "requires": [],
     },
 }
+
+
+_DEFINITION_WORDS_RE = re.compile(
+    r"\b(defin\w*|meaning\w*|gloss\w*|signific\w*|descri\w*)", re.IGNORECASE
+)
+
+
+def _asks_for_definitions(question: str) -> bool:
+    """True if the question asks for definitions/meanings of the words it returns."""
+    return bool(_DEFINITION_WORDS_RE.search(question or ""))
+
+
+def _wrap_average_per_item(sparql: str) -> str:
+    """Turn 'SELECT ?item (COUNT(DISTINCT ?x) AS ?itemCount) ... GROUP BY ?item'
+    into the average of those counts, as a subquery."""
+    lines = sparql.strip().splitlines()
+    prefixes = [ln for ln in lines if ln.upper().startswith("PREFIX ")]
+    inner = "\n".join(ln for ln in lines if not ln.upper().startswith("PREFIX ")).strip()
+    inner = "\n".join("    " + ln for ln in inner.splitlines())
+    return (
+        "\n".join(prefixes)
+        + "\n\nSELECT (AVG(?itemCount) AS ?avgCount)\nWHERE {\n  {\n"
+        + inner
+        + "\n  }\n}\n"
+    )
 
 
 # =============================================================================
@@ -369,12 +409,15 @@ class QueryAgent:
     def plan_to_queryspec(
         self,
         plan: AgentPlan,
+        question: Optional[str] = None,
     ) -> QuerySpec:
         """
         Convert an AgentPlan to a QuerySpec.
 
         Args:
             plan: Validated agent plan
+            question: The user question; when given, ?definition is returned only
+                if the question asks for definitions/meanings
 
         Returns:
             QuerySpec ready for compilation
@@ -427,7 +470,15 @@ class QueryAgent:
                 continue
 
             if tool_def.get("type") == "aggregation":
-                if step.tool == "aggregate_results":
+                if step.tool == "average_count_per_item":
+                    captured_aggregation = {
+                        "per_item": True,
+                        "agg_function": "COUNT",
+                        "agg_variable": step.params.get("count_variable", "?wr"),
+                        "distinct": True,
+                        "group_by": [step.params.get("item_variable", "?lemma")],
+                    }
+                elif step.tool == "aggregate_results":
                     # Rich aggregation: AVG, COUNT, etc. with HAVING
                     captured_aggregation = {
                         "agg_function": step.params.get("agg_function", "COUNT"),
@@ -497,8 +548,34 @@ class QueryAgent:
             if len(count_senses_words) > 1 and not effective_aggregation.get("group_by"):
                 effective_aggregation["group_by"] = ["?writtenRep"]
 
+        # Average of a per-item count: the inner query counts per item; translate()
+        # wraps it in an outer AVG (see _wrap_average_per_item)
+        if captured_aggregation and captured_aggregation.get("per_item"):
+            effective_aggregation = captured_aggregation
+            count_var = effective_aggregation["agg_variable"]
+            item_var = effective_aggregation["group_by"][0]
+            if item_var not in known_vars:
+                raise QuerySpecError(f"average_count_per_item: {item_var} is not provided by the plan")
+            if count_var not in known_vars:
+                raise QuerySpecError(f"average_count_per_item: {count_var} is not provided by the plan")
+            return QuerySpec(
+                blocks=blocks,
+                select_vars=[item_var],
+                aggregates={"?itemCount": f"COUNT(DISTINCT {count_var})"},
+                group_by=[item_var],
+                limit=None,
+            )
+
         # Build output specification
         select_vars, aggregates, group_by = self._build_output_spec(plan, known_vars, effective_aggregation)
+
+        # Definitions are added by the CompL-IT blocks; return them only when the
+        # question asks for them (each sense has its own definition, so an
+        # unrequested ?definition column multiplies the rows)
+        if question is not None and not _asks_for_definitions(question):
+            select_vars = [v for v in select_vars if v != "?definition"]
+            aggregates.pop("?definitionSample", None)
+            group_by = [v for v in group_by if v != "?definition"]
 
         # Determine order_by, having — prefer explicit LLM instruction, then defaults
         agg_order = effective_aggregation.get("order") if effective_aggregation else None
@@ -536,6 +613,8 @@ class QueryAgent:
             having=having,
             order_by=order_by,
             limit=limit,
+            # Lists: each answer once (joins over senses/entries repeat rows)
+            distinct=not aggregates,
         )
 
     def validate_plan(self, plan: AgentPlan) -> ValidationResult:
@@ -621,12 +700,15 @@ class QueryAgent:
             raise QuerySpecError(f"Invalid plan: {validation.error}")
 
         # Convert to QuerySpec
-        spec = self.plan_to_queryspec(plan)
+        spec = self.plan_to_queryspec(plan, question=nl)
 
         # Compile and assemble
         from .assembler import Assembler
         query_plan = spec.compile(self.registry)
         sparql = Assembler().assemble(query_plan)
+
+        if any(step.tool == "average_count_per_item" for step in plan.steps):
+            sparql = _wrap_average_per_item(sparql)
 
         return sparql, plan, spec
 
@@ -671,6 +753,10 @@ For emotion + polarity queries (e.g., "average polarity by emotion", "which emot
 - For "distribution of emotions by POS", include group_by=["?emotion", "?pos"] and use aggregate_results with COUNT
 
 For "fewest"/"most" queries, use aggregate_results or count_results with order="asc"/"desc" and limit=1.
+
+For "on average, how many X per Y" queries (e.g. "average number of written forms per verb lemma"):
+- Use find_liita_lemmas_by_pattern (match all, with the POS filter if any), then average_count_per_item
+  with count_variable="?wr" and item_variable="?lemma". Do NOT use aggregate_results with AVG for this.
 
 Output JSON schema:
 {

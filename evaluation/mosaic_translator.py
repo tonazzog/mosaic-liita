@@ -204,6 +204,8 @@ def deaggregate_sparql(sparql: str) -> str:
     if not has_count:
         # No COUNT remaining — remove GROUP BY entirely
         result = _GROUP_BY_PATTERN.sub("", result)
+        # The grouped query returned each group once: keep that with DISTINCT
+        result = re.sub(r"\bSELECT\s+(?!DISTINCT\b)", "SELECT DISTINCT ", result, count=1, flags=re.IGNORECASE)
         # Clean up extra blank lines
         result = re.sub(r'\n{3,}', '\n\n', result)
 

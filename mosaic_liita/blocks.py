@@ -210,7 +210,9 @@ def make_registry() -> BlockRegistry:
         provides=set(),
         prefixes={"lila"},
         where=[
-            "?liitaLemma a lila:Lemma ."
+            # lila:Hypolemma is a subclass of lila:Lemma; the endpoint does no inference
+            "VALUES ?liitaLemmaType {{ lila:Lemma lila:Hypolemma }}",
+            "?liitaLemma a ?liitaLemmaType ."
         ],
     ))
 
@@ -222,7 +224,8 @@ def make_registry() -> BlockRegistry:
         prefixes={"lila", "ontolex"},
         where=[
             "GRAPH <http://liita.it/data> {{",
-            "  ?lemma a lila:Lemma .",
+            "  VALUES ?lemmaType {{ lila:Lemma lila:Hypolemma }}",
+            "  ?lemma a ?lemmaType .",
             "  {pos_clause}",
             "  ?lemma ontolex:writtenRep ?wr .",
             "  {wr_filter}",
