@@ -40,7 +40,7 @@ EXAMPLE_QUERIES = [
     "Find synonyms of 'antico' with their senses.",
 ]
 
-LLM_PROVIDERS = ["mistral", "anthropic", "openai", "gemini", "ollama"]
+LLM_PROVIDERS = ["mistral", "anthropic", "openai", "gemini", "ollama", "claudecode"]
 
 DEFAULT_MODELS = {
     "mistral": "mistral-large-latest",
@@ -48,6 +48,7 @@ DEFAULT_MODELS = {
     "openai": "gpt-4.1-mini",
     "gemini": "gemini-2.5-flash",
     "ollama": "llama3.1",
+    "claudecode": "haiku",
 }
 
 
@@ -263,8 +264,8 @@ def translate_agentic(
         return "", "", "Please enter a question"
 
     # Agentic mode requires an LLM
-    if llm_provider != "ollama" and not llm_api_key.strip():
-        return "", "", "Agentic mode requires an API key (configure in Settings tab, or use Ollama)"
+    if llm_provider not in ("ollama", "claudecode") and not llm_api_key.strip():
+        return "", "", "Agentic mode requires an API key (configure in Settings tab, or use Ollama / Claude Code)"
 
     try:
         model = llm_model.strip() or DEFAULT_MODELS.get(llm_provider, "")

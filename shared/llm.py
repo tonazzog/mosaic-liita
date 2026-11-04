@@ -8,6 +8,7 @@ Unified interface for multiple LLM providers:
 - OpenAI (GPT)
 - Google (Gemini)
 - Ollama (local models)
+- Claude Code (headless CLI, uses the Claude Code login instead of an API key)
 
 This is a shared module used by both prisma (stable) and prisma_v2 (experimental).
 
@@ -32,6 +33,14 @@ Usage:
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Any
 from enum import Enum
+import json
+import os
+import shutil
+import subprocess
+import tempfile
+import time
+import re
+from datetime import datetime, timedelta
 
 
 class LLMProvider(Enum):
@@ -41,6 +50,7 @@ class LLMProvider(Enum):
     OPENAI = "openai"
     GEMINI = "gemini"
     OLLAMA = "ollama"
+    CLAUDE_CODE = "claudecode"
 
 
 class BaseLLM(ABC):
@@ -97,10 +107,43 @@ class BaseLLM(ABC):
 # Mistral Implementation
 # ============================================================================
 
+def _mistral_text(content) -> str:
+    """Answer text of a Mistral message: a plain string, or the text chunks of a chunk list
+    (reasoning models return [ThinkChunk, TextChunk, ...]; the thinking is discarded)."""
+    if isinstance(content, str):
+        return content.strip()
+    parts = [getattr(ch, "text", "") for ch in (content or []) if getattr(ch, "type", None) == "text"]
+    return "".join(parts).strip()
+
+
+def _log_mistral_call(model: str, response, seconds: float) -> None:
+    """Append one JSON line per call to $MISTRAL_LOG (if set), with token usage incl. reasoning."""
+    path = os.environ.get("MISTRAL_LOG")
+    if not path:
+        return
+    usage = response.usage
+    details = getattr(usage, "completion_tokens_details", None) or {}
+    reasoning = details.get("reasoning_tokens") if isinstance(details, dict) else getattr(details, "reasoning_tokens", None)
+    record = {
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "requested_model": model,
+        "model_used": response.model,
+        "prompt_tokens": usage.prompt_tokens,
+        "completion_tokens": usage.completion_tokens,
+        "reasoning_tokens": reasoning,
+        "finish_reason": response.choices[0].finish_reason,
+        "duration_s": round(seconds, 2),
+    }
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record) + "\n")
+
+
 class MistralLLM(BaseLLM):
     """Mistral AI client"""
 
     DEFAULT_MODEL = "mistral-large-latest"
+
+    MIN_MAX_TOKENS = 16000  # floor for reasoning models (thinking counts towards max_tokens)
 
     def __init__(
         self,
@@ -113,7 +156,10 @@ class MistralLLM(BaseLLM):
 
         try:
             from mistralai import Mistral
-            self.client = Mistral(api_key=api_key)
+            from mistralai.utils import RetryConfig, BackoffStrategy
+            # Retry rate limits (429) and 5xx with exponential backoff (ms), up to 10 min per call
+            retry = RetryConfig("backoff", BackoffStrategy(2000, 60000, 2.0, 600000), True)
+            self.client = Mistral(api_key=api_key, retry_config=retry)
         except ImportError:
             raise ImportError("Please install mistralai: pip install mistralai")
 
@@ -138,14 +184,24 @@ class MistralLLM(BaseLLM):
         # Add user message
         messages.append({"role": "user", "content": prompt})
 
+        requested = max_tokens if max_tokens is not None else self.default_max_tokens
+        started = time.time()
         response = self.client.chat.complete(
             model=self.model,
             messages=messages,
             temperature=temperature if temperature is not None else self.default_temperature,
-            max_tokens=max_tokens if max_tokens is not None else self.default_max_tokens,
+            top_p=1.0,  # required by recent Mistral models with greedy sampling (temperature 0)
+            # Reasoning models (e.g. mistral-large-4) spend part of max_tokens on thinking,
+            # so keep a floor; models without reasoning simply stop earlier.
+            max_tokens=max(requested, self.MIN_MAX_TOKENS),
         )
+        _log_mistral_call(self.model, response, time.time() - started)
 
-        return response.choices[0].message.content.strip()
+        choice = response.choices[0]
+        text = _mistral_text(choice.message.content)
+        if not text and choice.finish_reason == "length":
+            raise RuntimeError("Mistral response truncated before any answer text (max_tokens reached while reasoning)")
+        return text
 
 
 # ============================================================================
@@ -377,6 +433,152 @@ class OllamaLLM(BaseLLM):
 
 
 # ============================================================================
+# Claude Code (headless CLI) Implementation
+# ============================================================================
+
+class ClaudeCodeLLM(BaseLLM):
+    """
+    Claude via the Claude Code CLI in headless mode (`claude -p`).
+
+    Uses the local Claude Code login, so no API key is needed. The CLI does not
+    expose temperature or max_tokens, so those arguments are ignored. Tools are
+    disabled and the system prompt is replaced, so the model only sees our prompt.
+    """
+
+    DEFAULT_MODEL = "haiku"
+    DEFAULT_TIMEOUT = 300
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,  # Not needed for Claude Code
+        model: str = DEFAULT_MODEL,
+        default_temperature: float = 0.0,
+        default_max_tokens: int = 2048,
+        timeout: int = DEFAULT_TIMEOUT,
+    ):
+        super().__init__(api_key, model or self.DEFAULT_MODEL, default_temperature, default_max_tokens)
+        self.timeout = timeout
+
+        self.executable = shutil.which("claude")
+        if not self.executable:
+            raise ImportError("Claude Code CLI not found on PATH: https://docs.claude.com/en/docs/claude-code")
+
+    @property
+    def provider_name(self) -> str:
+        return "ClaudeCode"
+
+    MAX_ATTEMPTS = 30  # usage-limit waits can span several 5-hour windows
+
+    def complete(
+        self,
+        prompt: str,
+        system: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        **kwargs
+    ) -> str:
+        """One Claude Code call, waiting out usage limits and CLI self-updates."""
+        for attempt in range(1, self.MAX_ATTEMPTS + 1):
+            try:
+                return self._complete_once(prompt, system)
+            except FileNotFoundError:
+                # The CLI can briefly disappear while it updates itself: wait and look again
+                time.sleep(60)
+                self.executable = shutil.which("claude") or self.executable
+            except RuntimeError as e:
+                wait = _usage_limit_wait_seconds(str(e))
+                if wait is None or attempt == self.MAX_ATTEMPTS:
+                    raise
+                print(f"[claudecode] usage limit reached, waiting {wait / 60:.0f} min: {e}", flush=True)
+                time.sleep(wait)
+        raise RuntimeError("Claude Code CLI: too many retries")
+
+    def _complete_once(self, prompt: str, system: Optional[str] = None) -> str:
+        # Run in an empty temp dir so the project's CLAUDE.md is not picked up
+        with tempfile.TemporaryDirectory() as workdir:
+            cmd = [
+                self.executable, "-p",
+                "--output-format", "json",
+                "--model", self.model,
+                "--tools", "",
+                "--max-turns", "1",
+                "--strict-mcp-config",
+                "--no-session-persistence",
+            ]
+
+            # System prompt goes through a file and the prompt through stdin,
+            # to stay under the Windows command-line length limit
+            if system:
+                system_file = os.path.join(workdir, "system_prompt.txt")
+                with open(system_file, "w", encoding="utf-8") as f:
+                    f.write(system)
+                cmd += ["--system-prompt-file", system_file]
+
+            started = time.time()
+            proc = subprocess.run(
+                cmd,
+                input=prompt,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                cwd=workdir,
+                timeout=self.timeout,
+            )
+
+        try:
+            output = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            raise RuntimeError(
+                f"Claude Code CLI failed (exit {proc.returncode}): {proc.stderr.strip() or proc.stdout.strip()}"
+            )
+
+        _log_claude_code_call(self.model, output, time.time() - started, len(prompt) + len(system or ""))
+
+        if output.get("is_error"):
+            raise RuntimeError(f"Claude Code CLI error: {output.get('result') or output.get('subtype')}")
+
+        return output["result"].strip()
+
+
+def _usage_limit_wait_seconds(message: str) -> Optional[float]:
+    """Seconds to wait if message is a Claude usage-limit error, else None.
+
+    Parses e.g. "You've hit your 5-hour limit - resets 1:30pm (Europe/Rome)" (local time);
+    falls back to 15 minutes when the reset time cannot be read.
+    """
+    if "limit" not in message.lower() or "hit your" not in message.lower():
+        return None
+    m = re.search(r"resets\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)", message, re.IGNORECASE)
+    if not m:
+        return 15 * 60
+    hour = int(m.group(1)) % 12 + (12 if m.group(3).lower() == "pm" else 0)
+    now = datetime.now()
+    reset = now.replace(hour=hour, minute=int(m.group(2) or 0), second=0, microsecond=0)
+    if reset <= now:
+        if now - reset < timedelta(hours=1):
+            return 120  # the reset has just happened: retry shortly
+        reset += timedelta(days=1)
+    return (reset - now).total_seconds() + 120  # small margin after the reset
+
+
+def _log_claude_code_call(model: str, output: dict, seconds: float, prompt_chars: int) -> None:
+    """Append one JSON line per call to $CLAUDECODE_LOG (if set), with the exact model that answered."""
+    path = os.environ.get("CLAUDECODE_LOG")
+    if not path:
+        return
+    record = {
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "requested_model": model,
+        "models_used": list(output.get("modelUsage", {})),
+        "is_error": output.get("is_error"),
+        "duration_s": round(seconds, 2),
+        "prompt_chars": prompt_chars,
+    }
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record) + "\n")
+
+
+# ============================================================================
 # Factory Function
 # ============================================================================
 
@@ -392,7 +594,7 @@ def create_llm_client(
     Factory function to create an LLM client for the specified provider.
 
     Args:
-        provider: One of "mistral", "anthropic", "openai", "gemini", "ollama"
+        provider: One of "mistral", "anthropic", "openai", "gemini", "ollama", "claudecode"
         api_key: API key for the provider (falls back to environment variable if not provided)
         model: Model name (uses provider default if not specified)
         temperature: Default sampling temperature
@@ -484,8 +686,15 @@ def create_llm_client(
             host=host,
         )
 
+    elif provider_lower == "claudecode":
+        return ClaudeCodeLLM(
+            model=model or ClaudeCodeLLM.DEFAULT_MODEL,
+            default_temperature=temperature,
+            default_max_tokens=max_tokens,
+        )
+
     else:
-        valid_providers = ["mistral", "anthropic", "openai", "gemini", "ollama"]
+        valid_providers = ["mistral", "anthropic", "openai", "gemini", "ollama", "claudecode"]
         raise ValueError(f"Unknown provider: {provider}. Valid providers: {valid_providers}")
 
 
@@ -496,6 +705,7 @@ __all__ = [
     "OpenAILLM",
     "GeminiLLM",
     "OllamaLLM",
+    "ClaudeCodeLLM",
     "create_llm_client",
     "LLMProvider",
 ]

@@ -248,7 +248,7 @@ def main():
     parser.add_argument(
         "--provider",
         default=None,
-        help="LLM provider (mistral / anthropic / openai / gemini / ollama). Required for --mode agentic.",
+        help="LLM provider (mistral / anthropic / openai / gemini / ollama / claudecode). Required for --mode agentic.",
     )
     parser.add_argument(
         "--model",

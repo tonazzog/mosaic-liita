@@ -14,6 +14,7 @@ from .llm import (
     OpenAILLM,
     GeminiLLM,
     OllamaLLM,
+    ClaudeCodeLLM,
     create_llm_client,
     LLMProvider,
 )
@@ -26,6 +27,7 @@ __all__ = [
     "OpenAILLM",
     "GeminiLLM",
     "OllamaLLM",
+    "ClaudeCodeLLM",
     "create_llm_client",
     "LLMProvider",
     "fetch_sparql",
