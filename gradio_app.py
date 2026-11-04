@@ -43,12 +43,12 @@ EXAMPLE_QUERIES = [
 LLM_PROVIDERS = ["mistral", "anthropic", "openai", "gemini", "ollama", "claudecode"]
 
 DEFAULT_MODELS = {
-    "mistral": "mistral-large-latest",
-    "anthropic": "claude-haiku-4-5-20251001",
-    "openai": "gpt-4.1-mini",
-    "gemini": "gemini-2.5-flash",
+    "mistral": "mistral-large-4-0",
+    "anthropic": "claude-sonnet-4-6",
+    "openai": "gpt-6.1-terra",
+    "gemini": "gemini-3.6-flash",
     "ollama": "llama3.1",
-    "claudecode": "haiku",
+    "claudecode": "claude-sonnet-4-6",
 }
 
 

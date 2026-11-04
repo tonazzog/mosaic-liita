@@ -330,7 +330,7 @@ with open("data/ontology_filtered.json") as f:
 
 # Initialize
 registry = make_registry()
-llm = create_llm_client(provider="mistral", api_key="your-key", model="mistral-large-latest")
+llm = create_llm_client(provider="mistral", api_key="your-key", model="mistral-large-4-0")
 agent = QueryAgent(registry, catalog, llm)
 
 # Translate
@@ -442,7 +442,7 @@ python scripts/run_f1_evaluation.py --mode deterministic
 python scripts/run_f1_evaluation.py \
     --mode agentic \
     --provider mistral \
-    --model mistral-large-latest \
+    --model mistral-large-4-0 \
     --api-key YOUR_KEY
 
 # Anthropic
@@ -465,7 +465,7 @@ python scripts/run_f1_evaluation.py \
 |-----------|---------|-------------|
 | `--mode` | `deterministic` | `deterministic` (rule-based planner) or `agentic` (LLM) |
 | `--provider` | — | LLM provider: `mistral`, `anthropic`, `openai`, `gemini`, `ollama`. Required for agentic mode. |
-| `--model` | provider default | Model identifier (e.g. `mistral-large-latest`, `claude-haiku-4-5-20251001`) |
+| `--model` | provider default | Model identifier (e.g. `mistral-large-4-0`, `claude-haiku-4-5-20251001`) |
 | `--api-key` | env variable | API key; falls back to the provider's standard env variable if omitted |
 | `--language` | `en` | NL question language to use: `en` or `it` |
 | `-o` / `--output` | auto | Output JSON path. Defaults to `reports/f1_report_mosaic_<mode>[_<provider>_<model>].json` |
@@ -487,7 +487,7 @@ python scripts/run_f1_evaluation.py \
 python scripts/run_f1_evaluation.py \
     --mode agentic \
     --provider mistral \
-    --model mistral-large-latest \
+    --model mistral-large-4-0 \
     --tpm-limit 500000 \
     --delay 1.2
 ```

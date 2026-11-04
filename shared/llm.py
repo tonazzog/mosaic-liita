@@ -10,6 +10,15 @@ Unified interface for multiple LLM providers:
 - Ollama (local models)
 - Claude Code (headless CLI, uses the Claude Code login instead of an API key)
 
+Default models (the same in PRISMA, MoSAIC and NL2SPARQL; pinned ids, no "-latest"
+aliases, so that results are reproducible):
+    Mistral    : mistral-large-4-0   (used in the thesis evaluation)
+    Anthropic  : claude-sonnet-4-6
+    OpenAI     : gpt-6.1-terra       (reasoning model: no temperature)
+    Gemini     : gemini-3.6-flash    (thinking model)
+    Ollama     : llama3.1            (local, no cost)
+    Claude Code: claude-sonnet-4-6
+
 This is a shared module used by both prisma (stable) and prisma_v2 (experimental).
 
 Usage:
@@ -19,7 +28,7 @@ Usage:
     client = create_llm_client(
         provider="anthropic",
         api_key="your-api-key",
-        model="claude-haiku-4-5-20251001"
+        model="claude-sonnet-4-6"
     )
 
     # Use the client
@@ -41,6 +50,21 @@ import tempfile
 import time
 import re
 from datetime import datetime, timedelta
+
+
+# Thinking/reasoning models spend part of the output budget on reasoning: keep a floor.
+REASONING_MIN_TOKENS = 16000
+
+
+def is_openai_reasoning_model(model: str) -> bool:
+    """gpt-5*, gpt-6* and o-series models (no temperature, max_completion_tokens)."""
+    return (model or "").lower().startswith(("gpt-5", "gpt-6", "o1", "o3", "o4"))
+
+
+def is_gemini_thinking_model(model: str) -> bool:
+    """Gemini 2.5 and later think by default; the thinking counts in max_output_tokens."""
+    m = (model or "").lower()
+    return m.startswith("gemini-2.5") or m.startswith("gemini-3")
 
 
 class LLMProvider(Enum):
@@ -141,7 +165,7 @@ def _log_mistral_call(model: str, response, seconds: float) -> None:
 class MistralLLM(BaseLLM):
     """Mistral AI client"""
 
-    DEFAULT_MODEL = "mistral-large-latest"
+    DEFAULT_MODEL = "mistral-large-4-0"
 
     MIN_MAX_TOKENS = 16000  # floor for reasoning models (thinking counts towards max_tokens)
 
@@ -211,7 +235,7 @@ class MistralLLM(BaseLLM):
 class AnthropicLLM(BaseLLM):
     """Anthropic Claude client"""
 
-    DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+    DEFAULT_MODEL = "claude-sonnet-4-6"
 
     def __init__(
         self,
@@ -269,7 +293,7 @@ class AnthropicLLM(BaseLLM):
 class OpenAILLM(BaseLLM):
     """OpenAI GPT client"""
 
-    DEFAULT_MODEL = "gpt-4.1-mini"
+    DEFAULT_MODEL = "gpt-6.1-terra"
 
     def __init__(
         self,
@@ -307,12 +331,17 @@ class OpenAILLM(BaseLLM):
         # Add user message
         messages.append({"role": "user", "content": prompt})
 
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=temperature if temperature is not None else self.default_temperature,
-            max_tokens=max_tokens if max_tokens is not None else self.default_max_tokens,
-        )
+        requested = max_tokens if max_tokens is not None else self.default_max_tokens
+        params = {"model": self.model, "messages": messages}
+        if is_openai_reasoning_model(self.model):
+            # Reasoning models (gpt-5*, gpt-6*, o-series) accept only the default
+            # temperature and count their thinking in max_completion_tokens.
+            params["max_completion_tokens"] = max(requested, REASONING_MIN_TOKENS)
+        else:
+            params["temperature"] = temperature if temperature is not None else self.default_temperature
+            params["max_tokens"] = requested
+
+        response = self.client.chat.completions.create(**params)
 
         return response.choices[0].message.content.strip()
 
@@ -324,7 +353,7 @@ class OpenAILLM(BaseLLM):
 class GeminiLLM(BaseLLM):
     """Google Gemini client (uses google-genai SDK)"""
 
-    DEFAULT_MODEL = "gemini-2.5-flash"
+    DEFAULT_MODEL = "gemini-3.6-flash"
 
     def __init__(
         self,
@@ -346,6 +375,10 @@ class GeminiLLM(BaseLLM):
     def provider_name(self) -> str:
         return "Google Gemini"
 
+    def _output_budget(self, max_tokens: Optional[int]) -> int:
+        requested = max_tokens if max_tokens is not None else self.default_max_tokens
+        return max(requested, REASONING_MIN_TOKENS) if is_gemini_thinking_model(self.model) else requested
+
     def complete(
         self,
         prompt: str,
@@ -356,7 +389,7 @@ class GeminiLLM(BaseLLM):
     ) -> str:
         config = self.types.GenerateContentConfig(
             temperature=temperature if temperature is not None else self.default_temperature,
-            max_output_tokens=max_tokens if max_tokens is not None else self.default_max_tokens,
+            max_output_tokens=self._output_budget(max_tokens),
             system_instruction=system,
         )
 
@@ -445,7 +478,7 @@ class ClaudeCodeLLM(BaseLLM):
     disabled and the system prompt is replaced, so the model only sees our prompt.
     """
 
-    DEFAULT_MODEL = "haiku"
+    DEFAULT_MODEL = "claude-sonnet-4-6"
     DEFAULT_TIMEOUT = 300
 
     def __init__(
@@ -614,7 +647,7 @@ def create_llm_client(
         client = create_llm_client(
             provider="anthropic",
             api_key="sk-...",
-            model="claude-haiku-4-5-20251001"
+            model="claude-sonnet-4-6"
         )
         response = client.complete("Hello!", system="You are a helpful assistant.")
     """
