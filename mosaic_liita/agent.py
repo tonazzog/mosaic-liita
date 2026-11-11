@@ -331,6 +331,14 @@ class ValidationResult:
 # Agent Implementation
 # =============================================================================
 
+class _PlanError(Exception):
+    """Planning failure that keeps the plan, so that it can be shown to the LLM in the repair round."""
+
+    def __init__(self, message: str, plan: Optional["AgentPlan"] = None) -> None:
+        super().__init__(message)
+        self.plan = plan
+
+
 class QueryAgent:
     """
     LLM-powered agent that decomposes natural language queries into block operations.
@@ -382,6 +390,7 @@ class QueryAgent:
         nl: str,
         temperature: float = 0.0,
         max_tokens: int = 1500,
+        feedback: Optional[str] = None,
     ) -> AgentPlan:
         """
         Decompose a natural language query into an agent plan.
@@ -395,6 +404,8 @@ class QueryAgent:
             AgentPlan with tool calls and output specification
         """
         prompt = self._build_prompt(nl)
+        if feedback:
+            prompt += "\n\n" + feedback
         system = self._build_system_prompt()
 
         raw = self.llm.complete(
@@ -676,13 +687,65 @@ class QueryAgent:
 
         return ValidationResult(valid=True, warnings=warnings)
 
+    # MoSAIC v2 (I2): one verify-and-repair round. The assembled query is executed; on a planning error,
+    # an endpoint error or an empty answer the LLM gets its previous plan and the problem, once.
+    repair: bool = True
+    execute_timeout: int = 90
+
+    def _attempt(self, nl: str, temperature: float, feedback: Optional[str]) -> Tuple[str, AgentPlan, QuerySpec]:
+        """Decompose -> validate -> assemble (one LLM call)."""
+        plan = self.decompose(nl, temperature=temperature, feedback=feedback)
+
+        validation = self.validate_plan(plan)
+        if not validation.valid:
+            raise _PlanError(f"Invalid plan: {validation.error}", plan)
+
+        try:
+            spec = self.plan_to_queryspec(plan, question=nl)
+            from .assembler import Assembler
+            query_plan = spec.compile(self.registry)
+            sparql = Assembler().assemble(query_plan)
+        except Exception as e:  # noqa: BLE001 - every planning error is reported back to the LLM
+            raise _PlanError(f"{type(e).__name__}: {e}", plan) from e
+
+        if any(step.tool == "average_count_per_item" for step in plan.steps):
+            sparql = _wrap_average_per_item(sparql)
+        return sparql, plan, spec
+
+    def _check(self, sparql: str) -> Optional[str]:
+        """Execute the query; return a problem description, or None if it returns a non-empty answer."""
+        from shared.sparql import fetch_sparql
+        try:
+            res = fetch_sparql(sparql, limit=5, timeout=self.execute_timeout)
+        except Exception as e:  # noqa: BLE001
+            return f"The endpoint rejected or failed on the query: {str(e)[:400]}"
+        rows = res.get("results", {}).get("bindings", [])
+        if not rows:
+            return "The query returned no results."
+        values = [b.get("value", "") for row in rows for b in row.values()]
+        if len(rows) == 1 and values and all(v.strip() in ("0", "0.0", "") for v in values):
+            return "The query returned only zero/empty aggregate values."
+        return None
+
+    @staticmethod
+    def _feedback(plan: Optional[AgentPlan], problem: str, sparql: Optional[str] = None) -> str:
+        prev = json.dumps({"steps": [{"tool": st.tool, "params": st.params} for st in plan.steps],
+                           "output_vars": plan.output_vars, "aggregation": plan.aggregation},
+                          ensure_ascii=False) if plan else "(no valid plan was produced)"
+        text = (f"Your previous plan for this query had a problem.\nPrevious plan: {prev}\n"
+                f"Problem: {problem}\n")
+        if sparql:
+            text += f"SPARQL generated from it:\n{sparql}\n"
+        return text + ("Produce a corrected plan (JSON only). Keep the reasoning short. If the plan was right and the "
+                       "data simply has no answer, you may return the same plan.")
+
     def translate(
         self,
         nl: str,
         temperature: float = 0.0,
     ) -> Tuple[str, AgentPlan, QuerySpec]:
         """
-        Full translation pipeline: decompose -> validate -> assemble.
+        Full translation pipeline: decompose -> validate -> assemble, plus (v2) one verify-and-repair round.
 
         Args:
             nl: Natural language query
@@ -691,26 +754,27 @@ class QueryAgent:
         Returns:
             Tuple of (sparql_query, agent_plan, query_spec)
         """
-        # Decompose
-        plan = self.decompose(nl, temperature=temperature)
+        try:
+            first = self._attempt(nl, temperature, None)
+        except Exception as e:  # noqa: BLE001
+            if not self.repair:
+                raise
+            plan = e.plan if isinstance(e, _PlanError) else None
+            return self._attempt(nl, temperature, self._feedback(plan, str(e)[:600]))
 
-        # Validate
-        validation = self.validate_plan(plan)
-        if not validation.valid:
-            raise QuerySpecError(f"Invalid plan: {validation.error}")
-
-        # Convert to QuerySpec
-        spec = self.plan_to_queryspec(plan, question=nl)
-
-        # Compile and assemble
-        from .assembler import Assembler
-        query_plan = spec.compile(self.registry)
-        sparql = Assembler().assemble(query_plan)
-
-        if any(step.tool == "average_count_per_item" for step in plan.steps):
-            sparql = _wrap_average_per_item(sparql)
-
-        return sparql, plan, spec
+        if not self.repair:
+            return first
+        problem = self._check(first[0])
+        if problem is None:
+            return first
+        try:
+            second = self._attempt(nl, temperature, self._feedback(first[1], problem, first[0]))
+        except Exception:  # noqa: BLE001 - keep the first, assembled query
+            return first
+        # Prefer the repaired query, unless the first one executed and the repaired one does not answer either
+        if problem.startswith("The endpoint") or self._check(second[0]) is None:
+            return second
+        return first
 
     # =========================================================================
     # Private Methods
@@ -808,28 +872,43 @@ Output your plan as JSON:"""
         # Extract JSON from response
         raw = raw.strip()
 
-        # Try to find JSON object — use a balanced-brace scan to avoid
-        # greedily capturing text that follows the JSON block (which would
-        # produce "Extra data" parse errors when the model appends commentary).
-        start = raw.find('{')
-        if start == -1:
-            raise ValueError(f"No JSON found in LLM response: {raw[:200]}")
-        depth = 0
-        end = start
-        for i, ch in enumerate(raw[start:], start):
-            if ch == '{':
+        # v2: scan ALL balanced top-level {...} blocks (string-aware) and keep the LAST one that parses and
+        # has "steps". Models sometimes write a malformed plan and then a corrected one (v1 took the first block).
+        candidates = []
+        depth, start, in_str, esc = 0, None, False, False
+        for i, ch in enumerate(raw):
+            if in_str:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+                continue
+            if ch == '"' and depth > 0:
+                in_str = True
+            elif ch == '{':
+                if depth == 0:
+                    start = i
                 depth += 1
-            elif ch == '}':
+            elif ch == '}' and depth > 0:
                 depth -= 1
                 if depth == 0:
-                    end = i
-                    break
-        json_str = raw[start:end + 1]
-
-        try:
-            data = json.loads(json_str)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in response: {e}")
+                    candidates.append(raw[start:i + 1])
+        if not candidates:
+            raise ValueError(f"No JSON found in LLM response: {raw[:200]}")
+        data, last_err = None, None
+        for json_str in reversed(candidates):
+            try:
+                obj = json.loads(json_str)
+            except json.JSONDecodeError as e:
+                last_err = e
+                continue
+            if isinstance(obj, dict) and "steps" in obj:
+                data = obj
+                break
+        if data is None:
+            raise ValueError(f"Invalid JSON in response: {last_err}")
 
         # Parse steps
         steps = []

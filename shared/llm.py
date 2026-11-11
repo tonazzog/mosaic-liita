@@ -53,7 +53,10 @@ from datetime import datetime, timedelta
 
 
 # Thinking/reasoning models spend part of the output budget on reasoning: keep a floor.
-REASONING_MIN_TOKENS = 16000
+# MoSAIC v2: configurable through LLM_REASONING_MIN_TOKENS (v1 runs used 16000; 5/71 held-out calls of
+# mistral-large-4 hit it and were truncated before answering).
+import os as _os
+REASONING_MIN_TOKENS = int(_os.environ.get("LLM_REASONING_MIN_TOKENS", "16000"))
 
 
 def is_openai_reasoning_model(model: str) -> bool:
@@ -167,7 +170,7 @@ class MistralLLM(BaseLLM):
 
     DEFAULT_MODEL = "mistral-large-4-0"
 
-    MIN_MAX_TOKENS = 16000  # floor for reasoning models (thinking counts towards max_tokens)
+    MIN_MAX_TOKENS = REASONING_MIN_TOKENS  # floor for reasoning models (thinking counts towards max_tokens)
 
     def __init__(
         self,
