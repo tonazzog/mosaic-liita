@@ -260,6 +260,17 @@ AGENT_TOOLS: Dict[str, Dict[str, Any]] = {
     },
 }
 
+# MoSAIC v2 (I3): tools for the rest of the problem perimeter (agentic mode only)
+from .v2_tools import V2_TOOLS, V2_RELATIONS, V2_SLOTS, register_tool_blocks  # noqa: E402
+AGENT_TOOLS.update(V2_TOOLS)
+AGENT_TOOLS["find_semantic_relations"]["parameters"]["relation_type"]["enum"] = (
+    ["hyponym", "hypernym", "synonym", "antonym", "meronym", "holonym"] + list(V2_RELATIONS))
+AGENT_TOOLS["find_semantic_relations"]["parameters"]["relation_type"]["description"] = (
+    "Type of semantic relation. hyponym/hypernym/meronym/holonym/synonym/antonym, or CompL-it qualia and "
+    "derivational relations: used_for (what X is used for), created_by, telic, derived_from_adjective "
+    "(noun -> its base adjective), deadjectival_noun (adjective -> nouns derived from it), derived_from_noun, "
+    "denominal_adjective")
+
 
 _DEFINITION_WORDS_RE = re.compile(
     r"\b(defin\w*|meaning\w*|gloss\w*|signific\w*|descri\w*)", re.IGNORECASE
@@ -375,6 +386,7 @@ class QueryAgent:
 
     def _register_dynamic_blocks(self) -> None:
         """Register blocks that may be created dynamically."""
+        register_tool_blocks(self.registry)
         # BIND block for ?lemma -> ?liitaLemma
         if "BIND_LEMMA_TO_LIITALEMMA" not in self.registry.blocks:
             bind_block = Block(
@@ -790,8 +802,13 @@ class QueryAgent:
     # Private Methods
     # =========================================================================
 
+    prompt_version: int = 2  # v2: plan language with ids, references and operators (I4); 1 = original prompt
+
     def _build_system_prompt(self) -> str:
         """Build the system prompt for the LLM."""
+        if self.prompt_version >= 2:
+            from .prompt_v2 import SYSTEM_PROMPT_V2
+            return SYSTEM_PROMPT_V2
         return """You are a query planner for the LiITA Italian linguistic database. Your job is to decompose natural language queries into a structured plan using the available tools.
 
 IMPORTANT RULES:
@@ -998,7 +1015,11 @@ Output your plan as JSON:"""
             # - meronym: ?senseRel lexinfo:partMeronym ?seedSense
             #     → senseRel is a part of seed ✓
             # - synonym/antonym: symmetric (UNION both directions)
-            if rel_type == "synonym" or rel_type == "antonym":
+            if rel_type in V2_RELATIONS:
+                pred, direction = V2_RELATIONS[rel_type]
+                slots["rel_triple"] = (f"?seedSense {pred} ?senseRel ." if direction == "seed_to_rel"
+                                       else f"?senseRel {pred} ?seedSense .")
+            elif rel_type == "synonym" or rel_type == "antonym":
                 # Symmetric - use both directions
                 slots["rel_triple"] = (
                     f"{{ ?seedSense {rel_pred} ?senseRel . }} UNION "
@@ -1072,6 +1093,9 @@ Output your plan as JSON:"""
                     slots["emotion_filter_clause"] = ""
             else:
                 slots["emotion_filter_clause"] = ""
+
+        if tool_name in V2_SLOTS:
+            slots.update(V2_SLOTS[tool_name](params))
 
         # Fill in any missing required slots with empty strings
         if block_id in self.registry.blocks:

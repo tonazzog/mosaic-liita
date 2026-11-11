@@ -26,6 +26,7 @@ PREFIXES: Dict[str, str] = {
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "dcterms": "http://purl.org/dc/terms/",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "complit": "http://klab/lexicon/vocabulary/compl-it#",  # v2: CompL-it semantic types, traits, qualia relations
 }
 
 # ---------------------------

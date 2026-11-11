@@ -186,7 +186,11 @@ class TreeBuilder:
             params["pattern_type"] = "exact"
 
         step = ToolCall(tool=tool, params=params)
-        known = {f"?{n}" for n in self._visible_names(scope)}
+        if s.get("input"):
+            pre = f"{s['input']}."
+            known = {f"?{q[len(pre):]}" for q in self._visible_qnames(scope) if q.startswith(pre)}
+        else:
+            known = {f"?{n}" for n in self._visible_names(scope)}
         block_id = self.agent._resolve_block_id(step, tool_def, known)
         if not block_id:
             raise TreePlanError(f"Step '{sid}' ({tool}): cannot resolve the SPARQL block")
@@ -194,6 +198,8 @@ class TreeBuilder:
         slots = self.agent._build_slots(step, tool_def, block_id)
         lines = [ln.format(**slots) for ln in block.where]
         self.prefixes |= set(block.prefixes)
+        if any("complit:" in ln for ln in lines):
+            self.prefixes.add("complit")
 
         # bindings for required variables
         rename: Dict[str, str] = {}
@@ -249,7 +255,9 @@ class TreeBuilder:
                 out_lines.append(re.sub(r"FILTER\s*\(.*\)\s*\.?\s*$", cond + " .", ln) if ln.strip().startswith("FILTER")
                                  else ln.replace(f'"{tok}"', f"STR({target})"))
 
-        local = {m.group(1) for ln in block.where for m in _VAR.finditer(ln)}
+        # block-local variables: those of the template AND those introduced by slot values (filters, clauses);
+        # rendered variables of other steps never occur here (references are tokens until this point)
+        local = {m.group(1) for ln in lines for m in _VAR.finditer(ln)}
         rendered = [self._rename(ln, sid, rename, local) for ln in out_lines]
         provided = {p[1:] for p in block.provides}
         for name in provided:
@@ -506,7 +514,7 @@ class TreeBuilder:
             gcols = []
             for g in group:
                 b = g[1:].split("_", 1)[-1] if "_" in g else g[1:]
-                gcols.append(g)
+                gcols.append(g if g == f"?{b}" or sum(1 for x in group if x.endswith('_' + b)) > 1 else f"({g} AS ?{b})")
             head = gcols + [f"({expr} AS {alias})"]
             if group:
                 tail.append("GROUP BY " + " ".join(group))

@@ -44,6 +44,10 @@ class Assembler:
             needed_prefixes |= bi.prefixes
             where_lines.extend(bi.render_where())
 
+        # v2: CompL-it vocabulary used inside slot values (qualia/derivational relations)
+        if any("complit:" in ln for ln in where_lines):
+            needed_prefixes.add("complit")
+
         # Detect prefixes used in aggregate expressions (e.g., xsd:float)
         for expr in plan.aggregates.values():
             for pfx in PREFIXES:
