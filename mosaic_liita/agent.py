@@ -343,6 +343,18 @@ class ValidationResult:
 # Agent Implementation
 # =============================================================================
 
+def _log_plan(nl: str, plan: "AgentPlan", feedback: Optional[str]) -> None:
+    """Append the plan to $MOSAIC_PLAN_LOG (JSON lines), for error analysis. No-op when unset."""
+    import os
+    path = os.environ.get("MOSAIC_PLAN_LOG")
+    if not path:
+        return
+    rec = {"question": nl, "repair": feedback is not None, "steps": plan.raw_steps,
+           "output_vars": plan.output_vars, "aggregation": plan.aggregation}
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
 class _PlanError(Exception):
     """Planning failure that keeps the plan, so that it can be shown to the LLM in the repair round."""
 
@@ -708,6 +720,7 @@ class QueryAgent:
     def _attempt(self, nl: str, temperature: float, feedback: Optional[str]) -> Tuple[str, AgentPlan, QuerySpec]:
         """Decompose -> validate -> assemble (one LLM call)."""
         plan = self.decompose(nl, temperature=temperature, feedback=feedback)
+        _log_plan(nl, plan, feedback)
 
         from .tree import TreeBuilder, is_tree_plan
         if is_tree_plan(plan.raw_steps):

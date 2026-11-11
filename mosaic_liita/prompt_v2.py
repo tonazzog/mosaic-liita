@@ -51,6 +51,10 @@ HOW TO COMPOSE
 - Per-item counting ("words with more than N translations", "for each emotion, how many...") : aggregate with group_by
   (and having for "more than N"); or the top-level "aggregation" when the whole answer is that table.
 - "On average, how many ... per item": an aggregate per item, then top-level aggregation AVG of "<g>.value".
+- Two counts per group in one table ("for each X, how many ... and how many ..."): two aggregate operators with their own
+  inner steps, each grouped by X, then a compare "=" between the two group variables, so that the rows are aligned.
+- Two independent totals ("how many A and how many B"): two reference operators; ALL the steps of each count (including
+  the step that lists the items) go inside its own reference. Never count over a variable bound outside the operator.
 - "The most / the fewest": aggregate per item + reference MAX (or MIN) of the same count + compare "=" on numbers
   (use cmp "<=" and ">=" together, or ">=" against MAX). Never rely on ordering + limit.
 - Several statistics in one answer: one reference (or aggregate) per statistic, each with "as" set to the column
@@ -65,9 +69,16 @@ CONVENTIONS
   it provides ?liitaLemma and the LiITA written form ?liitaWR.
 - Emotions: get_emotions with the Italian category names. Polarity: get_sentiment gives ?polarityValue (numeric)
   and ?polarityLabel (Positive / Negative / Neutral). "positive/negative polarity" = the class, unless a threshold is given.
-- "how many" = COUNT of distinct items: count the lemma or word variable, not its written form, unless the question counts forms.
-- Output only what the question asks for: the requested words (written forms) and, for tables, the group and the values.
-  For translations, output BOTH the Italian word and its translation (e.g. ["a.wr", "t.sicWR"]).
+- "How many" always means a COUNT (top-level "aggregation", or an aggregate/reference operator), never the list of the
+  items. Count the lemma or word variable, not its written form, unless the question counts forms.
+  "How many X does each Y have": group by Y.
+- OUTPUT: the requested items (written forms) PLUS every attribute the question names, so that each row explains itself:
+  - a translation (dialect word) is always output together with its Italian word (e.g. ["a.wr", "t.sicWR"]),
+    also when the question asks only for the dialect words or only for the Italian words but constrains the translation's form;
+  - the emotion label when the question names emotions; the definition when it names definitions or meanings;
+    the polarity value or class when it names polarity;
+  - for tables, the group and the values.
+  A condition that is only tested ("which X have a translation", "without an emotion") is not output.
 - "Kinds / types / examples of X" = hyponyms of X (find_semantic_relations). Use find_words_by_semantic_type only when
   the question names a SIMPLE semantic type explicitly (e.g. "of semantic type 'Fruit'").
 - Keep the plan minimal. Output ONLY the JSON plan.
@@ -112,6 +123,29 @@ Q: Quali verbi sono associati ad almeno quattro emozioni diverse in ELIta?
      {"id": "a", "tool": "find_liita_lemmas_by_pattern", "params": {"pattern_type": "contains", "pattern_text": "", "pos_filter": "verb"}},
      {"id": "e", "tool": "get_emotions", "input": "a", "params": {}}]}],
  "output_vars": ["a.wr", "g.count"], "aggregation": null}
+
+Q: For each ELIta emotion, how many adjectives and how many verbs are associated with it?
+{"reasoning": "two per-emotion counts, aligned on the emotion", "steps": [
+  {"id": "ga", "op": "aggregate", "function": "COUNT", "variable": "a.lemma", "group_by": ["e.emotionLabel"],
+   "as": "adjectiveCount", "steps": [
+     {"id": "a", "tool": "find_liita_lemmas_by_pattern", "params": {"pattern_type": "contains", "pattern_text": "", "pos_filter": "adjective"}},
+     {"id": "e", "tool": "get_emotions", "input": "a", "params": {}}]},
+  {"id": "gv", "op": "aggregate", "function": "COUNT", "variable": "v.lemma", "group_by": ["f.emotionLabel"],
+   "as": "verbCount", "steps": [
+     {"id": "v", "tool": "find_liita_lemmas_by_pattern", "params": {"pattern_type": "contains", "pattern_text": "", "pos_filter": "verb"}},
+     {"id": "f", "tool": "get_emotions", "input": "v", "params": {}}]},
+  {"id": "c", "op": "compare", "left": "e.emotionLabel", "cmp": "=", "right": "f.emotionLabel"}],
+ "output_vars": ["e.emotionLabel", "ga.adjectiveCount", "gv.verbCount"], "aggregation": null}
+
+Q: Quanti verbi hanno una traduzione siciliana e quanti una traduzione parmigiana?
+{"reasoning": "two independent totals, each with its own steps", "steps": [
+  {"id": "r1", "op": "reference", "function": "COUNT", "variable": "a.lemma", "as": "sicilianCount", "steps": [
+     {"id": "a", "tool": "find_liita_lemmas_by_pattern", "params": {"pattern_type": "contains", "pattern_text": "", "pos_filter": "verb"}},
+     {"id": "s", "tool": "translate_to_sicilian", "input": "a", "params": {}}]},
+  {"id": "r2", "op": "reference", "function": "COUNT", "variable": "b.lemma", "as": "parmigianoCount", "steps": [
+     {"id": "b", "tool": "find_liita_lemmas_by_pattern", "params": {"pattern_type": "contains", "pattern_text": "", "pos_filter": "verb"}},
+     {"id": "p", "tool": "translate_to_parmigiano", "input": "b", "params": {}}]}],
+ "output_vars": ["r1.sicilianCount", "r2.parmigianoCount"], "aggregation": null}
 
 Q: Which other Italian words share a Parmigiano translation with 'raggiro'?
 {"reasoning": "translations of the seed, then other Italian words translated by a Parmigiano lemma with the same spelling", "steps": [

@@ -36,6 +36,8 @@ if TYPE_CHECKING:
     from .agent import QueryAgent
 
 _VAR = re.compile(r"\?([A-Za-z_][A-Za-z0-9_]*)")
+# conventional names of aggregate columns (v1 block aliases)
+_AGG_NAMES = {"count", "avgValue", "sumValue", "minValue", "maxValue", "avgCount", "wordCount", "senseCount", "lemmaCount"}
 REF_TOKEN = "__MOSAIC_REF_{}__"
 # variables holding a CompL-it word IRI, per block, and the written-form variable compared with the word parameter
 _COMPLIT_WORD = {
@@ -110,6 +112,7 @@ class TreeBuilder:
         self.word_iri: Dict[str, str] = {}  # step id -> rendered CompL-it word IRI var
         self.str2iri: Dict[str, str] = {}   # rendered string var -> rendered IRI var of the same step
         self.word_sense: Dict[str, str] = {}  # rendered related-word var -> rendered related-sense var (semrel steps)
+        self.agg_vals: Dict[str, str] = {}    # rendered value var of reference/aggregate operators -> function
 
     # ------------------------------------------------------------------ public
     def build(self, raw_steps: List[Dict[str, Any]], output_vars: List[str],
@@ -119,9 +122,33 @@ class TreeBuilder:
         elems = self._render_steps(steps, scope)
         for f in filters:  # filter_variable steps at top level
             elems.append(("plain", [self._filter_variable(f, scope)]))
-        aggregation = aggregation or (self._agg_from_step(agg_steps[-1]) if agg_steps else None)
         where = self._flatten(self._merge(elems))
+        # v1 aggregation tools used as steps: their own outputs (e.g. "b.avgCount") are not step variables
+        agg_ids = {str(s.get("id")) for s in agg_steps if s.get("id")}
+        output_vars = [v for v in (output_vars or []) if str(v).lstrip("?").split(".", 1)[0] not in agg_ids]
+        if agg_steps and agg_steps[-1].get("tool") == "average_count_per_item" and not aggregation:
+            return self._average_per_item(where, agg_steps[-1], scope)
+        aggregation = aggregation or (self._agg_from_step(agg_steps[-1]) if agg_steps else None)
         return self._select(where, output_vars, aggregation, scope)
+
+    def _average_per_item(self, where: List[str], s: Dict[str, Any], scope: _Scope) -> str:
+        """v1 tool average_count_per_item inside a v2 plan: AVG over a per-item COUNT."""
+        p = s.get("params") or {}
+        inp = s.get("input")
+
+        def var(name: Any) -> str:
+            n = str(name or "").lstrip("?")
+            if not n:
+                raise TreePlanError("average_count_per_item needs count_variable and item_variable")
+            if "." not in n and inp:
+                n = f"{inp}.{n}"
+            return self._resolve(n, scope, str(s.get("id", "average")))
+
+        cv, iv = var(p.get("count_variable")), var(p.get("item_variable"))
+        inner = [f"{{ SELECT {iv} (COUNT(DISTINCT {cv}) AS ?itemCount) WHERE {{"] + ["    " + ln for ln in where] + \
+                [f"  }} GROUP BY {iv}", "}"]
+        return self._select(inner, [], {"function": "AVG", "variable": "?itemCount", "_alias": "?avgCount",
+                                        "_raw": True}, scope)
 
     # ------------------------------------------------------------------ steps
     def _split(self, raw_steps):
@@ -360,6 +387,7 @@ class TreeBuilder:
                 sub.append(f"  HAVING ({expr} {hc} {hval})")
             sub.append("}")
             scope.expose(sid, "value", vname)
+            self.agg_vals[vname] = fn
             if alias:
                 scope.qualified[f"{sid}.{alias}"] = vname
             for g, q in zip(group, s.get("group_by") or []):
@@ -494,19 +522,32 @@ class TreeBuilder:
             raise TreePlanError("output_vars is empty")
         # rename output columns back to their bare names when unambiguous (the evaluator maps by name)
         bare = [o[1:].split("_", 1)[-1] if "_" in o else o[1:] for o in outs]
+        # A single aggregate value in the answer gets the conventional name (count, avgValue...), as in v1:
+        # free names like ?total or ?numDefinitions are not recognised as aggregates by the evaluator.
+        # Several values (one per statistic) keep the names chosen in the plan.
+        agg_outs = [i for i, o in enumerate(outs) if o in self.agg_vals]
+        if len(agg_outs) == 1:
+            i = agg_outs[0]
+            fn = self.agg_vals[outs[i]]
+            if bare[i] not in _AGG_NAMES:
+                bare[i] = "count" if fn == "COUNT" else f"{fn.lower()}Value"
         cols = []
         for o, b in zip(outs, bare):
             cols.append(o if bare.count(b) > 1 or o == f"?{b}" else f"({o} AS ?{b})")
         head, tail = [], []
         if agg and agg.get("function"):
             fn = str(agg["function"]).upper()
-            var = self._resolve(agg["variable"], scope, "aggregation") if agg.get("variable") else None
+            if agg.get("_raw"):
+                var = agg["variable"]
+            else:
+                var = self._resolve(agg["variable"], scope, "aggregation") if agg.get("variable") else None
             if fn == "COUNT":
                 expr = f"COUNT(DISTINCT {var})" if var else "COUNT(*)"
                 alias = "?count"
             else:
                 expr = f"{fn}({self._num(var)})"
                 alias = f"?{fn.lower()}Value"
+            alias = agg.get("_alias", alias)
             group = [self._resolve(g, scope, "aggregation") for g in (agg.get("group_by") or [])]
             for o in outs:
                 if o not in group:
