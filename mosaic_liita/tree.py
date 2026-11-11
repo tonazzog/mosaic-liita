@@ -549,9 +549,13 @@ class TreeBuilder:
                 alias = f"?{fn.lower()}Value"
             alias = agg.get("_alias", alias)
             group = [self._resolve(g, scope, "aggregation") for g in (agg.get("group_by") or [])]
-            for o in outs:
-                if o not in group:
-                    group.append(o)
+            # Outputs join the GROUP BY only when the plan groups (e.g. a label next to its group key), and never the
+            # aggregated variable itself: without group_by the answer is one row ("how many senses" = 1 count,
+            # not one count per sense).
+            if group:
+                for o in outs:
+                    if o not in group and o != var:
+                        group.append(o)
             gcols = []
             for g in group:
                 b = g[1:].split("_", 1)[-1] if "_" in g else g[1:]

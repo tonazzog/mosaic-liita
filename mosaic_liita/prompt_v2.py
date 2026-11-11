@@ -79,6 +79,9 @@ CONVENTIONS
     the polarity value or class when it names polarity;
   - for tables, the group and the values.
   A condition that is only tested ("which X have a translation", "without an emotion") is not output.
+  Do NOT add definitions or senses unless the question asks for definitions, meanings or senses: there is one per
+  sense, so they multiply the rows (e.g. related words = ["a.wordRel", "a.itLemmaString"], no "a.definition").
+  With a top-level "aggregation" and no group_by the answer is ONE value: leave output_vars empty.
 - "Kinds / types / examples of X" = hyponyms of X (find_semantic_relations). Use find_words_by_semantic_type only when
   the question names a SIMPLE semantic type explicitly (e.g. "of semantic type 'Fruit'").
 - Keep the plan minimal. Output ONLY the JSON plan.
