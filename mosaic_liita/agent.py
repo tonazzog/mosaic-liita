@@ -98,13 +98,13 @@ AGENT_TOOLS: Dict[str, Dict[str, Any]] = {
     "join_to_liita": {
         "description": "Connect CompL-IT word results to LiITA lemmas. Required before getting translations, sentiment, or emotions.",
         "block_variants": {
-            "?word": "JOIN_WORD_TO_LIITA_FROM_WORD",
-            "?wordRel": "JOIN_WORDREL_TO_LIITA",
+            "?word": "JOIN_WORD_TO_LIITA_FROM_WORD_V2",
+            "?wordRel": "JOIN_WORDREL_TO_LIITA_V2",
         },
         "parameters": {
             "source_var": {"type": "string", "enum": ["?word", "?wordRel"], "description": "The CompL-IT variable to join from", "required": True},
         },
-        "provides": ["?liitaLemma"],
+        "provides": ["?liitaLemma", "?liitaWR"],
         "requires_one_of": ["?word", "?wordRel"],
     },
 
@@ -163,7 +163,7 @@ AGENT_TOOLS: Dict[str, Dict[str, Any]] = {
 
     "get_sentiment": {
         "description": "Get sentiment polarity (positive/negative/neutral) from Sentix.",
-        "block": "SENTIX_POLARITY",
+        "block": "SENTIX_POLARITY_V2",
         "parameters": {},
         "provides": ["?polarityLabel", "?polarityValue"],
         "requires": ["?liitaLemma"],
@@ -308,6 +308,7 @@ class AgentPlan:
     output_vars: List[str]
     filters: List[Dict[str, Any]] = field(default_factory=list)
     aggregation: Optional[Dict[str, Any]] = None
+    raw_steps: List[Dict[str, Any]] = field(default_factory=list)  # v2: steps as written by the LLM (ids, ops, refs)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -696,6 +697,15 @@ class QueryAgent:
         """Decompose -> validate -> assemble (one LLM call)."""
         plan = self.decompose(nl, temperature=temperature, feedback=feedback)
 
+        from .tree import TreeBuilder, is_tree_plan
+        if is_tree_plan(plan.raw_steps):
+            # v2 language: step instances, references, operators (I1)
+            try:
+                sparql = TreeBuilder(self).build(plan.raw_steps, plan.output_vars, plan.aggregation, question=nl)
+            except Exception as e:  # noqa: BLE001 - reported back to the LLM in the repair round
+                raise _PlanError(f"{type(e).__name__}: {e}", plan) from e
+            return sparql, plan, None
+
         validation = self.validate_plan(plan)
         if not validation.valid:
             raise _PlanError(f"Invalid plan: {validation.error}", plan)
@@ -729,7 +739,7 @@ class QueryAgent:
 
     @staticmethod
     def _feedback(plan: Optional[AgentPlan], problem: str, sparql: Optional[str] = None) -> str:
-        prev = json.dumps({"steps": [{"tool": st.tool, "params": st.params} for st in plan.steps],
+        prev = json.dumps({"steps": plan.raw_steps or [{"tool": st.tool, "params": st.params} for st in plan.steps],
                            "output_vars": plan.output_vars, "aggregation": plan.aggregation},
                           ensure_ascii=False) if plan else "(no valid plan was produced)"
         text = (f"Your previous plan for this query had a problem.\nPrevious plan: {prev}\n"
@@ -913,6 +923,8 @@ Output your plan as JSON:"""
         # Parse steps
         steps = []
         for step_data in (data.get("steps") or []):
+            if not isinstance(step_data, dict) or "tool" not in step_data:
+                continue  # v2 operator step: handled by the tree builder from raw_steps
             steps.append(ToolCall(
                 tool=step_data.get("tool", ""),
                 params=step_data.get("params", {}),
@@ -924,6 +936,7 @@ Output your plan as JSON:"""
             output_vars=data.get("output_vars") or [],
             filters=data.get("filters") or [],
             aggregation=data.get("aggregation"),
+            raw_steps=[st for st in (data.get("steps") or []) if isinstance(st, dict)],
         )
 
     def _resolve_block_id(

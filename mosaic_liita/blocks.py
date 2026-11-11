@@ -404,4 +404,41 @@ def make_registry() -> BlockRegistry:
         ],
     ))
 
+    register_v2_blocks(R)
     return R
+
+
+def register_v2_blocks(R: BlockRegistry) -> None:
+    """MoSAIC v2 block variants, used by the agentic mode only (the deterministic mode keeps the v1 blocks).
+
+    - SENTIX_POLARITY_V2: the polarity value is required. In v1 it was OPTIONAL, so any entry pointing to the
+      lemma (ELIta, CompL-it, dialect entries) matched and "lemmas with a Sentix polarity" meant "any entry".
+    - JOIN_*_TO_LIITA_V2: a CompL-it word's canonicalForm is also its own CompL-it form; keep only LiITA lemmas
+      (Lemma/Hypolemma in the LiITA graph) and expose their written form ?liitaWR.
+    """
+    R.register(Block(
+        id="SENTIX_POLARITY_V2",
+        requires={"?liitaLemma"},
+        provides={"?polarityLabel", "?polarityValue"},
+        prefixes={"marl", "ontolex"},
+        where=[
+            "?sentixLemma ontolex:canonicalForm ?liitaLemma ;",
+            "             marl:hasPolarityValue ?polarityValue .",
+            "OPTIONAL {{",
+            "  ?sentixLemma marl:hasPolarity ?polarity .",
+            "  BIND(STRAFTER(STR(?polarity), \"#\") AS ?polarityLabel)",
+            "}}",
+        ],
+    ))
+    for src, bid in (("?word", "JOIN_WORD_TO_LIITA_FROM_WORD_V2"), ("?wordRel", "JOIN_WORDREL_TO_LIITA_V2")):
+        R.register(Block(
+            id=bid,
+            requires={src},
+            provides={"?liitaLemma", "?liitaWR"},
+            prefixes={"ontolex", "lila"},
+            where=[
+                f"{src} ontolex:canonicalForm ?liitaLemma .",
+                "GRAPH <http://liita.it/data> {{ ?liitaLemma a ?liitaLemmaType ; ontolex:writtenRep ?liitaWR . "
+                "FILTER(?liitaLemmaType IN (lila:Lemma, lila:Hypolemma)) }}",
+            ],
+        ))
