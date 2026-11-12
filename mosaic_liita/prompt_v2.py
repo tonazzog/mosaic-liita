@@ -76,9 +76,14 @@ CONVENTIONS
   - a translation (dialect word) is always output together with its Italian word (e.g. ["a.wr", "t.sicWR"]),
     also when the question asks only for the dialect words or only for the Italian words but constrains the translation's form;
   - the emotion label when the question names emotions; the definition when it names definitions or meanings;
-    the polarity value or class when it names polarity;
+    the polarity value or class when it asks for it ("what polarity", "with their polarity"), not when it only filters on it;
   - for tables, the group and the values.
   A condition that is only tested ("which X have a translation", "without an emotion") is not output.
+- output_vars order: the requested items FIRST, then their attributes.
+- One row per answer item: apart from the cases above, do not add a column that can take several values for the same
+  item (several polarity values, the shared translation that links two words, an example word): it repeats the item
+  once per value. E.g. "which other words share a translation with X" -> only the other words;
+  "words with only positive polarity values" -> only the words.
   Do NOT add definitions or senses unless the question asks for definitions, meanings or senses: there is one per
   sense, so they multiply the rows (e.g. related words = ["a.wordRel", "a.itLemmaString"], no "a.definition").
   With a top-level "aggregation" and no group_by the answer is ONE value: leave output_vars empty.

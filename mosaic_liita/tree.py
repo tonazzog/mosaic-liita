@@ -113,6 +113,8 @@ class TreeBuilder:
         self.str2iri: Dict[str, str] = {}   # rendered string var -> rendered IRI var of the same step
         self.word_sense: Dict[str, str] = {}  # rendered related-word var -> rendered related-sense var (semrel steps)
         self.agg_vals: Dict[str, str] = {}    # rendered value var of reference/aggregate operators -> function
+        self.group_keys: set = set()          # rendered group_by vars of aggregate operators (projected by a subquery)
+        self.joined: Dict[str, str] = {}      # group key -> group key it is joined with (compare "=" between groups)
 
     # ------------------------------------------------------------------ public
     def build(self, raw_steps: List[Dict[str, Any]], output_vars: List[str],
@@ -136,7 +138,10 @@ class TreeBuilder:
             kept = [v for v in output_vars if str(v).lstrip("?").rsplit(".", 1)[-1] != "definition"]
             if kept:
                 output_vars = kept
-        return self._select(where, output_vars, aggregation, scope)
+        query = self._select(where, output_vars, aggregation, scope)
+        for right, left in self.joined.items():  # group keys joined by compare "=" share one variable
+            query = re.sub(re.escape(right) + r"\b", left, query)
+        return query
 
     def _average_per_item(self, where: List[str], s: Dict[str, Any], scope: _Scope) -> str:
         """v1 tool average_count_per_item inside a v2 plan: AVG over a per-item COUNT."""
@@ -361,6 +366,11 @@ class TreeBuilder:
             cmp = s.get("cmp", "=")
             if cmp not in ("=", "!=", "<", ">", "<=", ">="):
                 raise TreePlanError(f"Operator '{sid}' (compare): unknown comparison '{cmp}'")
+            if cmp == "=" and left in self.group_keys and right in self.group_keys and left != right:
+                # Two aggregate subqueries aligned on their group key: a real join (same variable) instead of a
+                # FILTER over their cross product, which Virtuoso may refuse as too expensive.
+                self.joined[right] = left
+                return []
             if cmp in ("=", "!="):
                 return [("plain", [f"FILTER(STR({left}) {cmp} STR({right}))"])]
             return [("plain", [f"FILTER({self._num(left)} {cmp} {self._num(right)})"])]
@@ -397,6 +407,7 @@ class TreeBuilder:
             self.agg_vals[vname] = fn
             if alias:
                 scope.qualified[f"{sid}.{alias}"] = vname
+            self.group_keys |= set(group)
             for g, q in zip(group, s.get("group_by") or []):
                 scope.expose(sid, q.split(".", 1)[-1], g)  # grouped vars stay visible outside (projected)
                 scope.qualified[q] = g
