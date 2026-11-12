@@ -209,6 +209,15 @@ class TreeBuilder:
         tool_def = AGENT_TOOLS.get(tool)
         if not tool_def:
             raise TreePlanError(f"Step '{sid}': unknown tool '{tool}'")
+        if tool == "bind_lemma_to_liita":
+            # ?lemma already is the LiITA lemma: expose it as <sid>.liitaLemma instead of emitting BIND, which
+            # Virtuoso evaluates wrongly inside nested groups (FILTER NOT EXISTS { BIND(?outer AS ?x) ... }).
+            inp = s.get("input")
+            lemma = self._resolve(f"{inp}.lemma", scope, sid) if inp else scope.latest_of("lemma")
+            if lemma is None:
+                raise TreePlanError(f"Step '{sid}': bind_lemma_to_liita needs a step providing ?lemma")
+            scope.expose(sid, "liitaLemma", lemma)
+            return []
         params = dict(s.get("params") or {})
         refs: Dict[str, str] = {}  # token -> rendered var
 
