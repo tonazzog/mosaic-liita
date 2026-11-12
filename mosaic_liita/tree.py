@@ -129,6 +129,13 @@ class TreeBuilder:
         if agg_steps and agg_steps[-1].get("tool") == "average_count_per_item" and not aggregation:
             return self._average_per_item(where, agg_steps[-1], scope)
         aggregation = aggregation or (self._agg_from_step(agg_steps[-1]) if agg_steps else None)
+        # As in v1: a definition column is kept only if the question asks for definitions/meanings (one definition
+        # per sense multiplies the rows). The planner adds it often even when told not to.
+        from .agent import _asks_for_definitions
+        if question is not None and not _asks_for_definitions(question):
+            kept = [v for v in output_vars if str(v).lstrip("?").rsplit(".", 1)[-1] != "definition"]
+            if kept:
+                output_vars = kept
         return self._select(where, output_vars, aggregation, scope)
 
     def _average_per_item(self, where: List[str], s: Dict[str, Any], scope: _Scope) -> str:
