@@ -17,6 +17,15 @@ from mosaic-liita/evaluation/f1_evaluator.py), so that their scores are comparab
   - variable names missing from the table that end in Wr / Word / WrittenRep are
     classified as primary (written forms are user-facing answers)
   - averages (aggregates named avg* / average* / mean*) match within 1% relative tolerance
+  - column mapping by value (2026-11-13, default column_mapping="value"): each gold answer
+    column is matched to the predicted column holding the same values (Dice overlap of the
+    two value sets, at least 0.1; one-to-one assignment maximising the total overlap); aggregate-only
+    answers are matched on the values of the first row. The choice looks only at
+    column-wise overlap, never at the resulting F1. Gold columns with no overlapping
+    predicted column keep the name-based mapping below; column_mapping="name" reproduces
+    the scores computed before this change. Reason: names are arbitrary (?lemma holds a
+    written form in one query and a lemma IRI in another), and the name rules mapped
+    identical answers to the wrong column (main 2072; held-out 3016, 3055, 3069)
   - F1Evaluator accepts both strip_limit (PRISMA/MoSAIC) and strip_predicted_limit
     (NL2SPARQL) for the same option
   - IRI/literal equivalents: when a gold primary answer is an IRI, the gold may name
@@ -579,6 +588,128 @@ def build_variable_mapping(
     return mapping
 
 
+VALUE_MAPPING_MAX_ASSIGNMENTS = 50000
+# Below this Dice overlap a column match is taken as accidental (e.g. one Sicilian word spelled like an
+# Italian gold word) and the name-based mapping is kept; such a match would give F1 near 0 anyway.
+VALUE_MAPPING_MIN_OVERLAP = 0.1
+
+
+def _value_set(rows: list[dict], var: str, is_numeric: bool) -> set:
+    return {normalize_value(r[var], is_numeric=is_numeric) for r in rows if r.get(var)}
+
+
+def _dice(a: set, b: set) -> float:
+    return 2 * len(a & b) / (len(a) + len(b)) if a and b else 0.0
+
+
+def _best_assignment(gold_vars: list[str], pred_vars: list[str], score) -> dict[str, str]:
+    """One-to-one gold -> predicted assignment maximising the total score (pairs scoring 0 are dropped).
+
+    Exhaustive when small, greedy (best pair first) otherwise. Ties keep the earlier predicted column.
+    """
+    import itertools
+
+    if not gold_vars or not pred_vars:
+        return {}
+    k = min(len(gold_vars), len(pred_vars))
+    n_assign = math.perm(len(pred_vars), k) * (math.comb(len(gold_vars), k) if len(gold_vars) > k else 1)
+    best: dict[str, str] = {}
+    if n_assign <= VALUE_MAPPING_MAX_ASSIGNMENTS:
+        best_total = 0.0
+        for golds in itertools.combinations(gold_vars, k):
+            for preds in itertools.permutations(pred_vars, k):
+                total = sum(score(g, p) for g, p in zip(golds, preds))
+                if total > best_total + 1e-12:
+                    best_total = total
+                    best = {g: p for g, p in zip(golds, preds) if score(g, p) > 0}
+        return best
+    pairs = sorted(((score(g, p), -i, g, p) for g in gold_vars for i, p in enumerate(pred_vars)), reverse=True)
+    used: set[str] = set()
+    for sc, _, g, p in pairs:
+        if sc <= 0:
+            break
+        if g not in best and p not in used:
+            best[g] = p
+            used.add(p)
+    return best
+
+
+def build_value_mapping(
+    gold_answer_vars: dict,
+    gold_results: list[dict],
+    predicted_results: list[dict],
+    predicted_sparql: str,
+    name_mapping: dict[str, str],
+) -> dict[str, str]:
+    """Map gold answer columns to predicted columns by their values; fall back to name_mapping.
+
+    Primary (tuple) columns: score = Dice overlap of the normalised value sets. For a gold IRI column
+    with a literal equivalent, the literal column is used when the predicted column holds literals,
+    as in compute_f1. Aggregate columns (compared on the first row by compute_f1): score 1 when the
+    first-row values match (averages within AVG_REL_TOLERANCE), else 0.
+    """
+    pred_vars = [v for v in _parse_select_variables(predicted_sparql) if any(r.get(v) for r in predicted_results)]
+    for r in predicted_results[:1]:  # variables bound in the results but not parsed from SELECT (e.g. SELECT *)
+        pred_vars += [v for v in r if v not in pred_vars]
+    numeric = set(gold_answer_vars.get("numeric", [])) | set(gold_answer_vars.get("aggregates", []))
+    equivalents = gold_answer_vars.get("equivalents", {}) or {}
+    primary = list(gold_answer_vars.get("primary", []))
+    aggregates = [v for v in gold_answer_vars.get("aggregates", []) if v not in primary]
+
+    gold_sets: dict[str, set] = {}
+    pred_sets: dict[str, set] = {}
+
+    def gset(var: str, num: bool) -> set:
+        key = f"{var}|{num}"
+        if key not in gold_sets:
+            gold_sets[key] = _value_set(gold_results, var, num)
+        return gold_sets[key]
+
+    def pset(var: str, num: bool) -> set:
+        key = f"{var}|{num}"
+        if key not in pred_sets:
+            pred_sets[key] = _value_set(predicted_results, var, num)
+        return pred_sets[key]
+
+    def primary_score(g: str, p: str) -> float:
+        num = g in numeric
+        gcol = g
+        if equivalents.get(g) and _column_kind(predicted_results, p) == "literal":
+            gcol = equivalents[g]
+        sc = _dice(gset(gcol, num), pset(p, num))
+        if sc < VALUE_MAPPING_MIN_OVERLAP:
+            return 0.0
+        return sc + (1e-6 if sc > 0 and name_mapping.get(g) == p else 0.0)  # tie-break: the name-based choice
+
+    mapping = _best_assignment(primary, pred_vars, primary_score)
+
+    if aggregates and gold_results and predicted_results:
+        g0, p0 = gold_results[0], predicted_results[0]
+        free = [p for p in pred_vars if p not in mapping.values()]
+
+        def agg_score(g: str, p: str) -> float:
+            gv = normalize_value(g0.get(g, ""), is_numeric=True)
+            pv = normalize_value(p0.get(p, ""), is_numeric=True)
+            if not gv or not pv:
+                return 0.0
+            ok = gv == pv
+            if not ok and g.lower().startswith(("avg", "average", "mean")):
+                try:
+                    ok = math.isclose(float(gv), float(pv), rel_tol=AVG_REL_TOLERANCE)
+                except ValueError:
+                    pass
+            return (1.0 + (1e-6 if name_mapping.get(g) == p else 0.0)) if ok else 0.0
+
+        mapping.update(_best_assignment(aggregates, free, agg_score))
+
+    used = set(mapping.values())
+    for g, p in name_mapping.items():  # unmatched by value: keep the name-based choice if still free
+        if g not in mapping and p not in used:
+            mapping[g] = p
+            used.add(p)
+    return mapping
+
+
 def _column_kind(rows: list[dict], var: str, sample: int = 50) -> Optional[str]:
     """'iri' if the bound values of var (in a sample of rows) are all IRIs, 'literal' otherwise, None if unbound."""
     values = [r[var] for r in rows[:sample] if r.get(var)]
@@ -756,7 +887,11 @@ class F1Evaluator:
         cache_gold_results: bool = True,
         strip_limit: bool = True,
         strip_predicted_limit: Optional[bool] = None,  # NL2SPARQL's name for strip_limit
+        column_mapping: str = "value",  # "value" (default since 2026-11-13) or "name" (previous behaviour)
     ):
+        if column_mapping not in ("value", "name"):
+            raise ValueError(f"column_mapping must be 'value' or 'name', not {column_mapping!r}")
+        self.column_mapping = column_mapping
         if strip_predicted_limit is not None:
             strip_limit = strip_predicted_limit
         self.endpoint = endpoint
@@ -826,6 +961,10 @@ class F1Evaluator:
             )
 
         var_mapping = build_variable_mapping(answer_variables, predicted_sparql, pred_exec.results)
+        if self.column_mapping == "value":
+            var_mapping = build_value_mapping(
+                answer_variables, gold_exec.results, pred_exec.results, predicted_sparql, var_mapping,
+            )
 
         numeric_vars = set(answer_variables.get("numeric", []))
         numeric_vars.update(answer_variables.get("aggregates", []))
