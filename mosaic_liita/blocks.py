@@ -413,6 +413,8 @@ def register_v2_blocks(R: BlockRegistry) -> None:
 
     - SENTIX_POLARITY_V2: the polarity value is required. In v1 it was OPTIONAL, so any entry pointing to the
       lemma (ELIta, CompL-it, dialect entries) matched and "lemmas with a Sentix polarity" meant "any entry".
+      marl:hasPolarity is required too (decision A, 2026-11-13): ELIta entries carry their own
+      marl:hasPolarityValue, so without it the ELIta value was taken as a Sentix value.
     - JOIN_*_TO_LIITA_V2: a CompL-it word's canonicalForm is also its own CompL-it form; keep only LiITA lemmas
       (Lemma/Hypolemma in the LiITA graph) and expose their written form ?liitaWR.
     """
@@ -423,11 +425,9 @@ def register_v2_blocks(R: BlockRegistry) -> None:
         prefixes={"marl", "ontolex"},
         where=[
             "?sentixLemma ontolex:canonicalForm ?liitaLemma ;",
+            "             marl:hasPolarity ?polarity ;",
             "             marl:hasPolarityValue ?polarityValue .",
-            "OPTIONAL {{",
-            "  ?sentixLemma marl:hasPolarity ?polarity .",
-            "  BIND(STRAFTER(STR(?polarity), \"#\") AS ?polarityLabel)",
-            "}}",
+            "BIND(STRAFTER(STR(?polarity), \"#\") AS ?polarityLabel)",
         ],
     ))
     for src, bid in (("?word", "JOIN_WORD_TO_LIITA_FROM_WORD_V2"), ("?wordRel", "JOIN_WORDREL_TO_LIITA_V2")):
