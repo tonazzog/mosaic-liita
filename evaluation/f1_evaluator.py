@@ -26,6 +26,12 @@ from mosaic-liita/evaluation/f1_evaluator.py), so that their scores are comparab
     the scores computed before this change. Reason: names are arbitrary (?lemma holds a
     written form in one query and a lemma IRI in another), and the name rules mapped
     identical answers to the wrong column (main 2072; held-out 3016, 3055, 3069)
+  - echo columns (2026-11-14, default ignore_echo_columns=True): a gold primary column that holds
+    the same value on every row, written as a literal in the gold query (the seed word of the
+    question, e.g. ?italianWord = "donna"), is not required; answers that list the translations
+    without repeating the seed word were scored 0 (held-out 3030, main 2063, 2065). Nothing is
+    dropped when all primary columns are echo columns. ignore_echo_columns=False reproduces the
+    previous scores
   - F1Evaluator accepts both strip_limit (PRISMA/MoSAIC) and strip_predicted_limit
     (NL2SPARQL) for the same option
   - IRI/literal equivalents: when a gold primary answer is an IRI, the gold may name
@@ -158,6 +164,7 @@ class F1Result:
     gold_error: Optional[str] = None
     predicted_error: Optional[str] = None
     predicted_sparql: Optional[str] = None   # generated query for inspection
+    ignored_columns: list = field(default_factory=list)  # gold echo columns left out (see echo_columns)
 
 
 @dataclass
@@ -710,6 +717,28 @@ def build_value_mapping(
     return mapping
 
 
+def echo_columns(gold_answer_vars: dict, gold_sparql: str, gold_results: list[dict]) -> list[str]:
+    """Gold primary columns that only repeat the seed word of the question.
+
+    A primary column is an echo column when it holds one and the same value on every gold row and
+    that value is written as a string literal in the gold query (e.g. ?italianWord = "donna" for
+    FILTER(STR(?italianWord) = "donna")). An answer that leaves it out is not wrong, so these columns
+    are not required. Nothing is dropped when every primary column is an echo column.
+    """
+    primary = list(gold_answer_vars.get("primary", []))
+    if len(primary) < 2 or not gold_results:
+        return []
+    literals = {m.strip().strip("^$").lower() for m in re.findall(r'"((?:[^"\\]|\\.)*)"', gold_sparql)}
+    out = []
+    for var in primary:
+        values = {normalize_value(r.get(var, "")).lower() for r in gold_results}
+        if len(values) == 1:
+            v = next(iter(values))
+            if v and v in literals:
+                out.append(var)
+    return [] if len(out) == len(primary) else out
+
+
 def _column_kind(rows: list[dict], var: str, sample: int = 50) -> Optional[str]:
     """'iri' if the bound values of var (in a sample of rows) are all IRIs, 'literal' otherwise, None if unbound."""
     values = [r[var] for r in rows[:sample] if r.get(var)]
@@ -888,7 +917,9 @@ class F1Evaluator:
         strip_limit: bool = True,
         strip_predicted_limit: Optional[bool] = None,  # NL2SPARQL's name for strip_limit
         column_mapping: str = "value",  # "value" (default since 2026-11-13) or "name" (previous behaviour)
+        ignore_echo_columns: bool = True,  # default since 2026-11-14; False reproduces the 2026-11-13 scores
     ):
+        self.ignore_echo_columns = ignore_echo_columns
         if column_mapping not in ("value", "name"):
             raise ValueError(f"column_mapping must be 'value' or 'name', not {column_mapping!r}")
         self.column_mapping = column_mapping
@@ -960,6 +991,11 @@ class F1Evaluator:
                 gold_count=0, predicted_count=0, true_positives=0,
             )
 
+        ignored = echo_columns(answer_variables, gold_sparql, gold_exec.results) if self.ignore_echo_columns else []
+        if ignored:
+            answer_variables = {**answer_variables,
+                                "primary": [v for v in answer_variables.get("primary", []) if v not in ignored]}
+
         var_mapping = build_variable_mapping(answer_variables, predicted_sparql, pred_exec.results)
         if self.column_mapping == "value":
             var_mapping = build_value_mapping(
@@ -978,6 +1014,7 @@ class F1Evaluator:
         )
 
         result.test_id = test_id
+        result.ignored_columns = ignored
         return result
 
     def evaluate_dataset(
