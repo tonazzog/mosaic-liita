@@ -52,6 +52,23 @@ _ALIASES = {"liitaLemma": ("lemma",)}
 NUMERIC_VARS = {"polarityValue", "value", "count"}
 
 
+_LEMMA_TYPE_VALUES = re.compile(
+    r"VALUES (\?\w+) \{ lila:Lemma lila:Hypolemma \}[ \t]*\n([ \t]*)(\?\w+) a \1 \.")
+
+
+def _lemma_type_filters(sparql: str) -> str:
+    """With a SERVICE in the query, render the lemma-type VALUES as FILTER IN (outside the SERVICE).
+
+    Virtuoso can reject VALUES combined with a SERVICE invocation ("Unsupported combination of subqueries and service
+    invocations", SP031; main test 2076), while the equivalent FILTER IN works. Queries without SERVICE are unchanged.
+    """
+    if "SERVICE <" not in sparql:
+        return sparql
+    return _LEMMA_TYPE_VALUES.sub(
+        lambda m: f"{m.group(3)} a {m.group(1)} .\n{m.group(2)}FILTER({m.group(1)} IN (lila:Lemma, lila:Hypolemma)) .",
+        sparql)
+
+
 class TreePlanError(ValueError):
     """Invalid v2 plan (reported to the LLM in the repair round)."""
 
@@ -115,10 +132,15 @@ class TreeBuilder:
         self.agg_vals: Dict[str, str] = {}    # rendered value var of reference/aggregate operators -> function
         self.group_keys: set = set()          # rendered group_by vars of aggregate operators (projected by a subquery)
         self.joined: Dict[str, str] = {}      # group key -> group key it is joined with (compare "=" between groups)
+        self.step_input: Dict[str, str] = {}  # tool step id -> its explicit input step id
 
     # ------------------------------------------------------------------ public
     def build(self, raw_steps: List[Dict[str, Any]], output_vars: List[str],
               aggregation: Optional[Dict[str, Any]] = None, question: Optional[str] = None) -> str:
+        return _lemma_type_filters(self._build(raw_steps, output_vars, aggregation, question))
+
+    def _build(self, raw_steps: List[Dict[str, Any]], output_vars: List[str],
+               aggregation: Optional[Dict[str, Any]] = None, question: Optional[str] = None) -> str:
         scope = _Scope()
         steps, agg_steps, filters = self._split(raw_steps)
         elems = self._render_steps(steps, scope)
@@ -252,15 +274,23 @@ class TreeBuilder:
         # bindings for required variables
         rename: Dict[str, str] = {}
         src = s.get("input")
+        if src:
+            self.step_input[str(sid)] = str(src)
         for req in sorted(block.requires):
             name = req[1:]
             bound = None
             cands = (name,) + _ALIASES.get(name, ())
             if src:
-                for c in cands:
-                    bound = scope.lookup(f"{src}.{c}")
-                    if bound:
-                        break
+                # the input step may only filter its own input (e.g. get_emotions on a lemma step): follow the input
+                # chain back to the step that provides the variable
+                hop, seen = src, set()
+                while hop and hop not in seen and not bound:
+                    seen.add(hop)
+                    for c in cands:
+                        bound = scope.lookup(f"{hop}.{c}")
+                        if bound:
+                            break
+                    hop = self.step_input.get(hop)
                 if not bound:
                     raise TreePlanError(f"Step '{sid}' ({tool}): input step '{src}' does not provide {req}")
             else:
@@ -380,9 +410,14 @@ class TreeBuilder:
                 # FILTER over their cross product, which Virtuoso may refuse as too expensive.
                 self.joined[right] = left
                 return []
-            if cmp in ("=", "!="):
+            if cmp in ("=", "!=") and not (self._is_numeric(left) or self._is_numeric(right)):
                 return [("plain", [f"FILTER(STR({left}) {cmp} STR({right}))"])]
-            return [("plain", [f"FILTER({self._num(left)} {cmp} {self._num(right)})"])]
+            # numbers (aggregate values, polarity values, numeric literals) are compared as numbers: STR() of an AVG
+            # and of the MIN of the same values can differ in datatype/format (main test 2094: 0 rows)
+            # aggregate values are already numbers and are compared uncast (casting both sides of AVG vs MIN(AVG)
+            # matched nothing on Virtuoso, main test 2094)
+            num = lambda x: x if x in self.agg_vals else self._num(x)  # noqa: E731
+            return [("plain", [f"FILTER({num(left)} {cmp} {num(right)})"])]
 
         if op in ("reference", "aggregate"):
             child = scope.child()
@@ -396,7 +431,12 @@ class TreeBuilder:
             else:
                 if not var:
                     raise TreePlanError(f"Operator '{sid}' ({op}): '{fn}' needs a 'variable'")
-                expr = f"{fn}({self._num(var)})"
+                # MIN/MAX of a value that is already an aggregate (e.g. per-group AVGs) is not cast: Virtuoso returns a
+                # MIN(xsd:float(?avg)) that no later comparison matches (main test 2094: 0 rows)
+                if fn in ("MIN", "MAX") and var in self.agg_vals:
+                    expr = f"{fn}({var})"
+                else:
+                    expr = f"{fn}({self._num(var)})"
             group = [self._resolve(g, child, sid) for g in (s.get("group_by") or [])] if op == "aggregate" else []
             alias = s.get("as")
             if alias is not None and not re.fullmatch(r"[A-Za-z][A-Za-z0-9]*", str(alias)):
@@ -460,6 +500,10 @@ class TreeBuilder:
                 return v
             return '"' + v.replace("\\", "\\\\").replace('"', '\\"') + '"'
         raise TreePlanError(f"Step '{sid}': invalid operand {v!r}")
+
+    def _is_numeric(self, x: str) -> bool:
+        return (x in self.agg_vals or bool(re.fullmatch(r"-?\d+(\.\d+)?", x))
+                or x.rsplit("_", 1)[-1].lstrip("?") in NUMERIC_VARS)
 
     def _num(self, x: str) -> str:
         if re.fullmatch(r"-?\d+(\.\d+)?", x):
