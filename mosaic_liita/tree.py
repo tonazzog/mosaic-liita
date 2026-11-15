@@ -50,6 +50,10 @@ _STRING_TO_IRI = {"itLemmaString": ("wordRel", "word"), "writtenRep": ("word",),
 # names accepted for a required variable when no step provides it under its own name
 _ALIASES = {"liitaLemma": ("lemma",)}
 NUMERIC_VARS = {"polarityValue", "value", "count"}
+# lila:hasPOS values used in LiITA (endpoint, 2026-11-15), keyed by lowercase letters only
+_LILA_POS = {re.sub(r"[^a-z]", "", p): p for p in (
+    "adjective", "adposition", "adverb", "coordinating_conjunction", "determiner", "interjection", "noun", "numeral",
+    "other", "particle", "pronoun", "proper_noun", "subordinating_conjunction", "verb")}
 
 
 _LEMMA_TYPE_VALUES = re.compile(
@@ -480,6 +484,18 @@ class TreeBuilder:
                     if v:
                         break
             if v is None:
+                # the referenced step may only filter its input (e.g. e.liitaLemma with e = get_emotions on b):
+                # follow its input chain, as for required variables (held-out 3061)
+                names = (name,) + _ALIASES.get(name, ())
+                hop, seen = self.step_input.get(sid2), {sid2}
+                while hop and hop not in seen and v is None:
+                    seen.add(hop)
+                    for n in names:
+                        v = scope.lookup(f"{hop}.{n}")
+                        if v:
+                            break
+                    hop = self.step_input.get(hop)
+            if v is None:
                 raise TreePlanError(f"Step '{sid}': reference '{qname}' is not visible here "
                                     f"(visible: {sorted(self._visible_qnames(scope))[:30]})")
             return v
@@ -498,6 +514,18 @@ class TreeBuilder:
                 return self._resolve(v, scope, sid)
             if re.fullmatch(r"-?\d+(\.\d+)?", v):
                 return v
+            # an IRI given as a string (e.g. "lila:properNoun" or the full IRI) is an IRI, not a literal (held-out 3006)
+            if v.startswith(PREFIXES["lila"]):
+                v = "lila:" + v[len(PREFIXES["lila"]):]
+            m = re.fullmatch(r"([A-Za-z]+):([A-Za-z_][\w-]*)", v)
+            if m and m.group(1) in PREFIXES:
+                self.prefixes.add(m.group(1))
+                if m.group(1) == "lila":  # POS names as guessed by the planner: properNoun / proper-noun -> proper_noun
+                    key = re.sub(r"[^a-z]", "", m.group(2).lower())
+                    v = "lila:" + _LILA_POS.get(key, m.group(2))
+                return v
+            if re.fullmatch(r"https?://[^\s<>\"]+", v):
+                return f"<{v}>"
             return '"' + v.replace("\\", "\\\\").replace('"', '\\"') + '"'
         raise TreePlanError(f"Step '{sid}': invalid operand {v!r}")
 
