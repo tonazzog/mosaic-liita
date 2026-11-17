@@ -17,6 +17,16 @@ The system offers two translation modes:
 
 Both modes use the same underlying block system, ensuring consistent and valid SPARQL output.
 
+## Thesis Version and Related Systems
+
+MoSAIC is one of three NL-to-SPARQL systems for LiITA developed for the master's thesis *Querying LiITA in Natural Language: Three Neuro-Symbolic Approaches to NL-to-SPARQL Translation*:
+
+- [PRISMA](https://github.com/tonazzog/prisma-per-liita) — the LLM classifies the intent, SPARQL is assembled by rules;
+- **MoSAIC** (this repository) — the LLM composes typed blocks, SPARQL is assembled deterministically;
+- [NL2SPARQL](https://github.com/tonazzog/nl2sparql) — the LLM generates SPARQL, grounded by retrieved examples and constraints.
+
+The version evaluated in the thesis is tagged **`thesis-final-2026-11-15`**. It includes the *revised agentic mode* described below (tree-structured plans); the deterministic mode is the original one.
+
 ## Architecture
 
 ```
@@ -153,17 +163,32 @@ Selected blocks:
 
 ## Agentic Mode
 
-The agentic translator uses an **LLM to decompose** queries into tool operations.
+The agentic translator uses an **LLM to decompose** queries into tool operations. The LLM never writes SPARQL: it produces a JSON plan, and the SPARQL is built deterministically from the blocks.
 
 ### How It Works
 
-1. **Present tools** to the LLM with descriptions and parameters
+1. **Present tools** to the LLM with descriptions, parameters, and the variables each tool requires and provides
 2. **LLM analyzes** the query and produces a structured plan (JSON)
-3. **Validate** the plan (check tool existence, dependencies, parameters)
-4. **Convert** tool calls to BlockCalls with appropriate slots
-5. **Build QuerySpec** from the plan
+3. **Build** the query from the plan: steps become blocks, each step's variables are renamed with the step id, operators become `FILTER NOT EXISTS`, `UNION`, `FILTER` and sub-queries
+4. **Check** the query on the endpoint; if the plan cannot be built, or the query fails, returns no rows or only zero aggregates, the problem is returned to the LLM for **one round of repair**
+
+### Plan Language
+
+A plan is a tree of steps. Every step has a short `id`, may declare as `input` the step it builds on, and exposes its variables as `<id>.<var>`; a parameter can be a reference (`{"ref": "a.wordRel"}`) instead of a literal, for instance to follow a chain of relations. Five operators can be nested:
+
+| Operator | Meaning |
+|----------|---------|
+| `not_exists` | keep the results for which the inner steps have no match (negation) |
+| `union` | results matching at least one of several branches |
+| `compare` | comparison between two variables, or between a variable and a value |
+| `reference` | a single value computed separately (e.g. the polarity of a reference word), usable in `compare` |
+| `aggregate` | one value per group (e.g. the number of emotions of each word), with optional `HAVING` |
+
+The planner prompt is in `mosaic_liita/prompt_v2.py`. Plans in the original flat format (a list of tool calls without ids) are still accepted.
 
 ### Available Tools
+
+The main tools are listed below; in total the agentic mode offers 28 tools, including grammatical features (gender, degree, inflection), hypolemmas and lemma variants, CompL-it semantic types and traits, functional and derivational relations, aggregation tools and metadata (`mosaic_liita/agent.py`, `mosaic_liita/v2_tools.py`).
 
 | Tool | Description | Provides |
 |------|-------------|----------|
@@ -182,21 +207,24 @@ The agentic translator uses an **LLM to decompose** queries into tool operations
 
 ### Example
 
-Query: `"Find synonyms of 'origine' whose Sicilian translation starts with 'm'"`
+Query: `"Which synonyms of 'origine' have no translation into Sicilian?"`
 
 LLM Plan:
 ```json
 {
-  "reasoning": "Need to find synonyms, join to LiITA, translate to Sicilian, then filter",
   "steps": [
-    {"tool": "find_semantic_relations", "params": {"seed_word": "origine", "relation_type": "synonym"}},
-    {"tool": "join_to_liita", "params": {"source_var": "?wordRel"}},
-    {"tool": "translate_to_sicilian", "params": {}},
-    {"tool": "filter_variable", "params": {"variable": "?sicWR", "pattern_type": "prefix", "pattern_text": "m"}}
+    {"id": "a", "tool": "find_semantic_relations",
+     "params": {"seed_word": "origine", "relation_type": "synonym"}},
+    {"id": "j", "tool": "join_to_liita", "input": "a", "params": {"source_var": "?wordRel"}},
+    {"id": "n", "op": "not_exists", "steps": [
+      {"id": "t", "tool": "translate_to_sicilian", "input": "j", "params": {}}]}
   ],
-  "output_vars": ["?itLemmaString", "?sicWR"]
+  "output_vars": ["a.wordRel", "a.itLemmaString"],
+  "aggregation": null
 }
 ```
+
+The builder renders the translation step inside `FILTER NOT EXISTS { ... }`; on the live endpoint the query returns the four synonyms without a Sicilian translation (*causa*, *filiazione*, *genesi*, *germe*).
 
 ### Strengths & Limitations
 
@@ -206,9 +234,10 @@ LLM Plan:
 - Can combine operations in novel ways
 
 **Limitations:**
-- Requires LLM API access (cost, latency)
+- Requires LLM access (cost, latency)
 - Output depends on LLM quality
-- May occasionally produce invalid plans (validated and rejected)
+- May occasionally produce invalid plans; one round of repair is attempted
+- Computations over aggregates (per-group statistics, nested aggregation, several statistics in one answer) are its weakest point
 
 ## Installation
 
@@ -233,9 +262,12 @@ pip install openai
 pip install anthropic
 
 # For Google Gemini
-pip install google-generativeai
+pip install google-genai
 
 # For Ollama (local, no pip install needed - just run Ollama)
+
+# For Claude Code (provider "claudecode"): no SDK and no API key; requires a local
+# installation of the Claude Code CLI, logged in (https://docs.claude.com/en/docs/claude-code)
 ```
 
 ### Data Files
@@ -374,11 +406,17 @@ mosaic-liita/
 
 ## Evaluation
 
-MoSAIC-LiITA includes a full evaluation pipeline that measures translation quality on a benchmark dataset of 100 natural language questions about Italian linguistics.
+MoSAIC-LiITA includes an evaluation pipeline that executes generated and gold queries on the LiITA endpoint and compares their answers.
 
-### Test Dataset
+### About the Evaluation
 
-The dataset (`data/test_dataset.json`) contains **100 NL→SPARQL pairs** covering the full range of query types that LiITA and CompL-IT support:
+The evaluator (`evaluation/f1_evaluator.py`) is the one used in the thesis; an identical copy is used by PRISMA, MoSAIC and NL2SPARQL, so that their scores are comparable. It executes the gold and the predicted query on the LiITA endpoint and computes precision, recall and F1 on the answers. Columns are matched **by value** (the predicted column whose values overlap most with each gold column), `LIMIT`/`OFFSET` are removed from both queries, a gold column that only repeats the seed word of the question (an *echo* column) is not required, and IRI and literal answers are accepted when the gold names both.
+
+`data/test_dataset.json` is the 100-question set of the first evaluation. In the thesis it serves as a **regression set**; the final evaluation used a separate test set of 86 questions, frozen before the systems were revised. Both are described in Chapter 6 of the thesis.
+
+### Regression Set
+
+The regression set (`data/test_dataset.json`) contains **100 NL→SPARQL pairs**:
 
 | Category | Count | Description |
 |----------|-------|-------------|
@@ -404,28 +442,6 @@ Each test case also carries one or more **pattern tags** that describe the SPARQ
 | `META_GRAPH` | 23 | Queries directly over the LiITA GRAPH |
 
 Each case specifies the **expected answer variables** (classified as primary/secondary/aggregates/numeric) and has a **gold SPARQL query** verified to execute correctly against the LiITA endpoint.
-
-### Evaluation Metric: F1 on Answer Sets
-
-The evaluation uses **F1 score on result sets** — the harmonic mean of precision and recall computed over the set of answer tuples returned by the gold and predicted SPARQL queries.
-
-Given gold result set G and predicted result set P, both executed against the live LiITA endpoint:
-
-```
-Precision = |G ∩ P| / |P|
-Recall    = |G ∩ P| / |G|
-F1        = 2 · Precision · Recall / (Precision + Recall)
-```
-
-**Why F1 on answers rather than SPARQL string similarity?**
-
-SPARQL string comparison is fragile: two queries can be syntactically different but semantically equivalent, or syntactically similar but return completely different results. F1 on answer sets measures what actually matters — whether the system returns the *right answers* — while being robust to variable naming differences, clause ordering, and equivalent reformulations. It also naturally handles partial credit: a query that finds 8 out of 9 correct meronyms scores F1 ≈ 0.89 rather than 0.
-
-Before comparison, answer tuples are aligned via a **variable mapping** step that matches gold variable names (e.g., `italianWord`, `hypernymWord`) to predicted variable names (e.g., `wr`, `wordRel`) using category-based matching, exact name matching, and substring similarity — accounting for MoSAIC's structural naming conventions.
-
-Numeric aggregate variables (`?count`, `?avgForms`) are compared as floating-point values with a small tolerance, scoring 1.0 for an exact match and 0.0 otherwise.
-
-The report also tracks **macro-F1** (average of per-category F1 scores, giving equal weight to each category regardless of size) alongside the micro-average F1.
 
 ### Running the Evaluation
 
@@ -464,7 +480,8 @@ python scripts/run_f1_evaluation.py \
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `--mode` | `deterministic` | `deterministic` (rule-based planner) or `agentic` (LLM) |
-| `--provider` | — | LLM provider: `mistral`, `anthropic`, `openai`, `gemini`, `ollama`. Required for agentic mode. |
+| `--provider` | — | LLM provider: `mistral`, `anthropic`, `openai`, `gemini`, `ollama`, `claudecode` (Claude Code CLI, no API key). Required for agentic mode. |
+| `--dataset` | `data/test_dataset.json` | Dataset to evaluate (same JSON format) |
 | `--model` | provider default | Model identifier (e.g. `mistral-large-4-0`, `claude-haiku-4-5-20251001`) |
 | `--api-key` | env variable | API key; falls back to the provider's standard env variable if omitted |
 | `--language` | `en` | NL question language to use: `en` or `it` |
@@ -505,73 +522,21 @@ python scripts/run_f1_evaluation.py \
     -o reports/f1_report_mosaic_agentic_ollama_mistral-large-3-675b-cloud.json
 ```
 
-### Example Report
+### Report Format
 
-Reports are saved as JSON files in the `reports/` directory. The structure is:
+Reports are saved as JSON files in the `reports/` directory, with a `summary` (evaluated and skipped cases, average precision, recall and F1, macro-F1), breakdowns `by_category` and `by_pattern`, and one entry per question in `results`:
 
 ```json
 {
-  "summary": {
-    "total_evaluated": 99,
-    "total_skipped": 1,
-    "avg_precision": 0.616,
-    "avg_recall": 0.654,
-    "avg_f1": 0.622,
-    "macro_f1": 0.613
-  },
-  "by_category": {
-    "complex":           { "avg_f1": 0.690, "count": 56 },
-    "emotion":           { "avg_f1": 0.422, "count": 9  },
-    "semantic_combined": { "avg_f1": 0.505, "count": 28 },
-    "translation":       { "avg_f1": 0.833, "count": 6  }
-  },
-  "by_pattern": {
-    "LEXICAL_FORM":      { "avg_f1": 1.000, "count": 7  },
-    "MORPHO_REGEX":      { "avg_f1": 0.747, "count": 13 },
-    "META_GRAPH":        { "avg_f1": 0.739, "count": 23 },
-    "SENSE_DEFINITION":  { "avg_f1": 0.762, "count": 18 },
-    "TRANSLATION":       { "avg_f1": 0.671, "count": 29 },
-    "SEMANTIC_RELATION": { "avg_f1": 0.566, "count": 17 },
-    "POS_FILTER":        { "avg_f1": 0.478, "count": 21 },
-    "COUNT_ENTITIES":    { "avg_f1": 0.392, "count": 15 }
-  },
-  "results": [
-    {
-      "test_id": 2000,
-      "f1": 1.0,
-      "precision": 1.0,
-      "recall": 1.0,
-      "gold_count": 391,
-      "predicted_count": 391,
-      "true_positives": 391,
-      "aggregate_score": null,
-      "aggregate_details": {},
-      "variable_mapping": {
-        "italianWord": "wr",
-        "parmigianoWord": "parWR"
-      },
-      "predicted_sparql": "PREFIX ... SELECT ?wr ?parWR WHERE { ... }",
-      "gold_error": null,
-      "predicted_error": null
-    },
-    {
-      "test_id": 2054,
-      "f1": 1.0,
-      "precision": 1.0,
-      "recall": 1.0,
-      "gold_count": 1,
-      "predicted_count": 1,
-      "true_positives": 1,
-      "aggregate_score": 1.0,
-      "aggregate_details": {
-        "count": { "gold": "78442.0", "predicted": "78442.0", "match": true }
-      },
-      "variable_mapping": { "count": "count" },
-      "predicted_sparql": "SELECT (COUNT(DISTINCT ?lemma) AS ?count) WHERE { ... }",
-      "gold_error": null,
-      "predicted_error": null
-    }
-  ]
+  "test_id": 2054,
+  "f1": 1.0, "precision": 1.0, "recall": 1.0,
+  "gold_count": 1, "predicted_count": 1, "true_positives": 1,
+  "aggregate_score": 1.0,
+  "aggregate_details": {"count": {"gold": "78442.0", "predicted": "78442.0", "match": true}},
+  "variable_mapping": {"count": "count"},
+  "predicted_sparql": "SELECT (COUNT(DISTINCT ?lemma) AS ?count) WHERE { ... }",
+  "gold_error": null,
+  "predicted_error": null
 }
 ```
 
