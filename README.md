@@ -25,7 +25,7 @@ MoSAIC is one of three NL-to-SPARQL systems for LiITA developed for the master's
 - **MoSAIC** (this repository) — the LLM composes typed blocks, SPARQL is assembled deterministically;
 - [NL2SPARQL](https://github.com/tonazzog/nl2sparql) — the LLM generates SPARQL, grounded by retrieved examples and constraints.
 
-The version evaluated in the thesis is tagged **`thesis-final-2026-11-15`**. It includes the *revised agentic mode* described below (tree-structured plans); the deterministic mode is the original one.
+The version evaluated in the thesis is tagged **`thesis-final-2026-11-15`**. The evaluation material (question sets, reports, analysis) is in [liita-nl2sparql-evaluation](https://github.com/tonazzog/liita-nl2sparql-evaluation). It includes the *revised agentic mode* described below (tree-structured plans); the deterministic mode is the original one.
 
 ## Architecture
 
@@ -412,7 +412,7 @@ MoSAIC-LiITA includes an evaluation pipeline that executes generated and gold qu
 
 The evaluator (`evaluation/f1_evaluator.py`) is the one used in the thesis; an identical copy is used by PRISMA, MoSAIC and NL2SPARQL, so that their scores are comparable. It executes the gold and the predicted query on the LiITA endpoint and computes precision, recall and F1 on the answers. Columns are matched **by value** (the predicted column whose values overlap most with each gold column), `LIMIT`/`OFFSET` are removed from both queries, a gold column that only repeats the seed word of the question (an *echo* column) is not required, and IRI and literal answers are accepted when the gold names both.
 
-`data/test_dataset.json` is the 100-question set of the first evaluation. In the thesis it serves as a **regression set**; the final evaluation used a separate test set of 86 questions, frozen before the systems were revised. Both are described in Chapter 6 of the thesis.
+`data/test_dataset.json` is the 100-question set of the first evaluation. In the thesis it serves as a **regression set**; the final evaluation used a separate test set of 86 questions, frozen before the systems were revised. Both are described in Chapter 6 of the thesis; the question sets, the evaluation reports and the analysis scripts are published in [liita-nl2sparql-evaluation](https://github.com/tonazzog/liita-nl2sparql-evaluation).
 
 ### Regression Set
 
